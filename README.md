@@ -1,7 +1,3 @@
-import pypandoc
-
-markdown = r"""# SpendWise
-
 > **Spend Smart. Live Wise.**  
 > A web-based personal finance tracker that helps users record income and expenses, organize transactions into categories, and monitor monthly budgets.
 
@@ -829,8 +825,4 @@ When you start work, first read this README, check the current branch, and sync 
 
 Built by the SpendWise team.  
 **Spend Smart. Live Wise.**
-"""
 
-output_path = "/mnt/data/README.md"
-pypandoc.convert_text(markdown, "md", format="md", outputfile=output_path, extra_args=["--standalone"])
-print(f"Created {output_path}")
