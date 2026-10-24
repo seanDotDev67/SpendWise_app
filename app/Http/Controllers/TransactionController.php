@@ -19,7 +19,11 @@ class TransactionController extends Controller
     }
     public function store(Request $request): JsonResponse{
         $validated = $request->validate([
-            
+            'category_id'=>[
+                'required', 'integer'
+
+                Rule::exists('categories')
+            ]
         ])
     }
 }
