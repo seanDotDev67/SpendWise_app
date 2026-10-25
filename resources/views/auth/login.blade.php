@@ -256,6 +256,12 @@
             font-size: calc(var(--u) * 1.1);
             margin: 0 0 calc(var(--u) * 1.8);
         }
+        .form-error {
+            text-align: center;
+            color: #c0392b;
+            font-size: calc(var(--u) * 1.1);
+            margin: 0 0 calc(var(--u) * 1.8);
+        }
         .mobile-signup { display: none; text-align: center; margin-top: 1.1rem; font-size: .9rem; color: #555; }
 
         /* ============ BRAND (left side, OUTSIDE the clip) ============ */
@@ -442,6 +448,9 @@
             @if (session('status'))
                 <div class="form-status">{{ session('status') }}</div>
             @endif
+            @if ($errors->has('google'))
+                <div class="form-error">{{ $errors->first('google') }}</div>
+            @endif
 
             <form method="POST" action="{{ route('login') }}" id="loginForm">
                 @csrf
@@ -472,8 +481,7 @@
 
                 <div class="or-row"><span>or</span></div>
 
-                <a href="#" class="btn-google"
-                   onclick="event.preventDefault(); alert('Google login will be handled by the backend team.');">
+                <a href="{{ route('auth.google.redirect') }}" class="btn-google">
                     Continue with Google
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
