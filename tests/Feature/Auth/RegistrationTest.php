@@ -13,7 +13,9 @@ class RegistrationTest extends TestCase
     {
         $response = $this->get('/register');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee(route('auth.google.redirect'), false)
+            ->assertSee('Continue with Google');
     }
 
     public function test_new_users_can_register(): void
