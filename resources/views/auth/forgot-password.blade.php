@@ -1,25 +1,27 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-    </div>
+@extends('auth.recovery-layout')
+@section('title', 'Forgot password')
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@section('content')
+    <div class="steps" aria-hidden="true"><span class="on"></span><span></span><span></span></div>
+    <img class="hero" src="{{ asset('images/spendwise-forgot-lock.png') }}" alt="">
 
-    <form method="POST" action="{{ route('password.email') }}">
+    <h1 class="page-title">Forgot Password?</h1>
+    <p class="page-sub">No worries. Enter your email and we'll send you a 6-digit code to verify it's you.</p>
+
+    @if (session('status'))
+        <div class="notice" role="status">{{ session('status') }}</div>
+    @endif
+
+    <form method="POST" action="{{ route('password.code.send') }}" data-loading="Sending…">
         @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="field">
+            <label for="email" class="sw-label">Email</label>
+            <input id="email" type="email" name="email" value="{{ old('email') }}"
+                   class="sw-input" required autofocus autocomplete="email">
+            @error('email') <div class="field-error">{{ $message }}</div> @enderror
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="btn-main">Send reset link</button>
+        <a href="{{ route('login') }}" class="back-link">← Back to sign in</a>
     </form>
-</x-guest-layout>
+@endsection
