@@ -348,6 +348,25 @@ Try registering a development account and logging in. Confirm that the relevant 
 php artisan config:clear
 ```
 
+### Gmail SMTP for password reset codes
+
+The password recovery flow emails a 6-digit code. To send it through Gmail, use a Google account with 2-Step Verification enabled and create an **App Password** in that account's Security settings. Use that 16-character app password, not your normal Google password.
+
+Set these values in your local `.env` (never commit or share the app password):
+
+```dotenv
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-gmail-address@gmail.com
+MAIL_PASSWORD=your-16-character-app-password
+MAIL_FROM_ADDRESS="${MAIL_USERNAME}"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Then run `php artisan config:clear` and request a reset code for an account email you can access. If Google does not offer App Passwords for your account, use an approved SMTP provider instead.
+
 Never post database passwords, `APP_KEY`, AI provider API keys, or other secrets in a GitHub issue, pull request, screenshot, or team chat.
 
 ---
@@ -825,4 +844,3 @@ When you start work, first read this README, check the current branch, and sync 
 
 Built by the SpendWise team.  
 **Spend Smart. Live Wise.**
-

@@ -25,7 +25,8 @@ class PasswordCodeController extends Controller
         session(['reset_email' => $email]);
         session()->forget('reset_verified');
 
-        return redirect()->route('password.code.verify.show');
+        return redirect()->route('password.code.verify.show')
+            ->with('status', 'If an account exists for that email, a 6-digit code has been sent.');
     }
 
     // Step 2: show the code page
