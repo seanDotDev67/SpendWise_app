@@ -485,7 +485,7 @@
 
                 <div class="forgot">
                     @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}">Forgot Password?</a>
+                        <a href="{{ route('password.request') }}"class="tos-link">Forgot Password?</a>
                     @endif
                 </div>
 
