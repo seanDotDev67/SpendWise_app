@@ -811,7 +811,9 @@
                                     class="tos-link">Privacy Policy</a>
                             </label>
                         </div>
-
+                        @error('terms')
+                        <div class="field-error">{{ $message }}</div>
+                        @enderror
                         <button type="submit" class="btn-create" id="registerBtn">Create account</button>
 
                         <div class="mobile-signin">
