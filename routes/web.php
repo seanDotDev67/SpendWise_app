@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::view('/transactions/page', 'transactions.index')->name('transactions.page');
     Route::resource('transactions', TransactionController::class)->only(['index', 'store', 'update', 'destroy']);
 });
 
