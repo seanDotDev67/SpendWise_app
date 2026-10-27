@@ -8,12 +8,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Category extends Model
 {
-    protected $fillable = ['userr_id', 'name','type', 'color', 'icon', 'is_archived'];
+    protected $fillable = ['user_id', 'name', 'type', 'color', 'icon', 'is_archived'];
 
-    public function user(): BelongsTo{
+    protected $casts = [
+        'is_archived' => 'boolean',
+    ];
+
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
-    public function transactions(): HasMany{
+
+    public function transactions(): HasMany
+    {
         return $this->hasMany(Transaction::class);
     }
 }
