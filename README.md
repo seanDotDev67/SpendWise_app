@@ -82,16 +82,36 @@ Do not mark a feature as complete just because a page exists. Confirm that valid
 
 | Layer | Technology |
 |---|---|
-| Backend framework | Laravel — check `composer.json` for the exact version |
-| Language | PHP — check the project's required version |
-| Database | MySQL or MariaDB |
-| Authentication | Laravel Breeze / Blade, if present in the repository |
-| Views | Laravel Blade |
-| Frontend assets | Tailwind CSS and Vite, if configured |
-| JavaScript dependencies | Node.js and npm |
+| Backend framework | Laravel 12 |
+| Language | PHP 8.2 or newer (the project constraint is `^8.2`) |
+| Database | SQLite by default; MySQL is also supported by the Laravel configuration |
+| Authentication | Laravel Breeze with Blade; Laravel Socialite is included for OAuth sign-in |
+| Views | Laravel Blade templates |
+| Frontend | Tailwind CSS, Alpine.js, and Vite |
+| Build tooling | Node.js, npm, Laravel Vite plugin, PostCSS, and Autoprefixer |
 | Version control | Git and GitHub |
 
-Use the versions already defined in the repository's `composer.json`, `composer.lock`, `package.json`, and `package-lock.json`. Do not upgrade framework or dependency versions without team agreement.
+### Main packages
+
+These are the project's direct dependencies, as listed in `composer.json` and `package.json`. The lock files (`composer.lock` and `package-lock.json`) record the exact versions installed for reproducible setups.
+
+| Package | What it is used for |
+|---|---|
+| `laravel/framework` | Backend framework, routing, database access, validation, and application services |
+| `laravel/breeze` | Authentication scaffolding and Blade views (development dependency) |
+| `laravel/socialite` | OAuth sign-in integrations, including the Google sign-in configuration |
+| `laravel/tinker` | Interactive Laravel command-line shell |
+| `fakerphp/faker` | Fake data for development and tests |
+| `phpunit/phpunit`, `mockery/mockery`, `nunomaduro/collision` | Automated tests, test doubles, and readable CLI test errors |
+| `laravel/pail`, `laravel/pint`, `laravel/sail` | Log viewing, PHP formatting, and optional Docker development tooling |
+| `alpinejs` | Lightweight JavaScript interactions in the browser |
+| `tailwindcss`, `@tailwindcss/forms` | Utility-first styling and form styles |
+| `vite`, `laravel-vite-plugin` | Frontend development server and asset bundling for Laravel |
+| `postcss`, `autoprefixer` | CSS processing and browser vendor prefixes |
+| `axios` | JavaScript HTTP requests |
+| `concurrently` | Runs multiple local development commands together |
+
+Use the versions already defined in the repository's manifests and lock files. Do not upgrade framework or dependency versions without team agreement.
 
 ---
 
@@ -182,13 +202,13 @@ spendwise/
 Install these tools before setup:
 
 - **Git** — to clone the repository and work with branches.
-- **PHP** — use the version required by the repository.
+- **PHP 8.2 or newer** — with the required PHP extensions enabled, including PDO SQLite for the default database.
 - **Composer** — installs PHP/Laravel dependencies.
-- **MySQL or MariaDB** — XAMPP is one local option.
-- **Node.js and npm** — needed if the project uses Vite/frontend dependencies.
+- **Node.js and npm** — installs and builds the frontend packages.
+- **MySQL or MariaDB (optional)** — only needed if you choose MySQL instead of the default SQLite setup.
 - **A code editor** — for example, VS Code or PhpStorm.
 
-On Windows, XAMPP can provide PHP and MySQL. Make sure the PHP executable and Composer are available in your terminal's PATH. Check the actual version requirements in the repository before installing or upgrading tools.
+On Windows, XAMPP can provide PHP and MySQL. Make sure PHP, Composer, Node.js, and npm are available in your terminal's PATH. Check the requirements in the project manifests before installing or upgrading tools.
 
 ---
 
@@ -257,32 +277,33 @@ php artisan key:generate
 
 This writes a local `APP_KEY` to your `.env`. Never copy another teammate's private `.env` into GitHub.
 
-### 6. Create a local database
+### 6. Create the local SQLite database
 
-Create a database using phpMyAdmin, MySQL Workbench, or the MySQL CLI. Example database name:
+SQLite is the default database in `.env.example`, so a separate database server is not required. Create the empty database file if it does not already exist.
 
-```sql
-CREATE DATABASE spendwise
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+PowerShell:
+
+```powershell
+if (-not (Test-Path database\database.sqlite)) {
+    New-Item -ItemType File -Path database\database.sqlite
+}
 ```
 
-If your team has agreed on another database name, use that name consistently.
+Git Bash, macOS, or Linux:
 
-### 7. Configure the database in `.env`
+```bash
+touch database/database.sqlite
+```
 
-Open `.env` and set the connection details for your local machine. Example:
+### 7. Check the database setting in `.env`
+
+Keep this setting in `.env` to use the default SQLite database:
 
 ```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=spendwise
-DB_USERNAME=root
-DB_PASSWORD=
+DB_CONNECTION=sqlite
 ```
 
-These values are examples only. Your username, password, and port may differ. XAMPP installations sometimes use a different MySQL port.
+The default database file is `database/database.sqlite`. If the team prefers MySQL, create a local MySQL database and set `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` in `.env`.
 
 ### 8. Run migrations
 
@@ -302,10 +323,10 @@ Do not run seeders blindly if they could create duplicate or unwanted sample dat
 
 ### 9. Install and build frontend assets
 
-If the repository contains `package.json`:
+Install the JavaScript packages declared in `package.json` using the committed lock file:
 
 ```bash
-npm install
+npm ci
 npm run build
 ```
 
@@ -644,7 +665,7 @@ If a feature requires coordinated changes in backend and frontend, agree on the 
 - **Passwords:** use Laravel authentication and hashing. Never store plaintext passwords.
 - **Secrets:** never commit `.env`, API keys, database passwords, or private tokens.
 - **Ownership:** scope every financial query to the authenticated user.
-- **Authorization:** validate ownership on reads, updates, and deletes—not only when listing records.
+- **Authorization:** vownalidate ership on reads, updates, and deletes—not only when listing records.
 - **Mass assignment:** configure model `$fillable` or `$guarded` carefully and never blindly accept ownership fields from user input.
 - **Validation:** validate amounts, dates, category types, and category ownership on the server.
 - **Database integrity:** use foreign keys and unique constraints for critical relationships.
@@ -728,7 +749,7 @@ git push -u origin feature/name
 ### Frontend assets
 
 ```bash
-npm install                    # Install dependencies from package files
+npm ci                         # Install dependencies from the lock file
 npm run dev                    # Run Vite development server
 npm run build                  # Build production assets
 ```
@@ -766,9 +787,8 @@ Install Node.js, which includes npm, and restart your terminal.
 
 ### Database connection error
 
-- Confirm MySQL/MariaDB is running.
-- Check `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`.
-- Confirm the database exists.
+- For the default SQLite setup, confirm `database/database.sqlite` exists, `DB_CONNECTION=sqlite`, and PDO SQLite is enabled in PHP.
+- If using MySQL, confirm the MySQL/MariaDB service is running, the database exists, and the `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` values are correct.
 - Run `php artisan config:clear` after local configuration changes.
 - Read the complete error message before changing settings.
 
@@ -825,4 +845,3 @@ When you start work, first read this README, check the current branch, and sync 
 
 Built by the SpendWise team.  
 **Spend Smart. Live Wise.**
-
