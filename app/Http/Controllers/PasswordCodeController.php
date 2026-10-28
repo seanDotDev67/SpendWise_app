@@ -121,12 +121,9 @@ class PasswordCodeController extends Controller
         Cache::put("pwd_reset_code:{$email}", Hash::make($code), now()->addMinutes(self::MINUTES));
         Cache::forget("pwd_reset_attempts:{$email}");
 
-        Mail::raw(
-            "Your SpendWise verification code is {$code}.\n\nIt expires in " . self::MINUTES . " minutes. If you didn't ask for this, you can ignore this email.",
-            function ($m) use ($email) {
-                $m->to($email)->subject('Your SpendWise reset code');
-            }
-        );
+        Mail::send('emails.password-code', ['code' => $code, 'minutes' => self::MINUTES], function ($m) use ($email) {
+            $m->to($email)->subject('Your SpendWise reset code');
+        });
     }
 
     private function mask(string $email): string
