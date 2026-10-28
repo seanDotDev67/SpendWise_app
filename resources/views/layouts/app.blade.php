@@ -54,13 +54,31 @@
         .sw-brand small { font-size: 8px; }
         .sw-nav { margin-top: 14px; padding-left: 12px; }
         .sw-nav a {
+            position: relative; isolation: isolate;
             display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 14px;
             color: #FAF7EE; text-decoration: none; font-size: 14px; border-radius: 30px 0 0 30px;
-            transition: background-color .2s ease, color .2s ease;
+            transition: color .3s ease, transform .3s cubic-bezier(.2, .7, .25, 1);
         }
-        .sw-nav a i { font-size: 18px; }
-        .sw-nav a:hover { background: rgba(107, 128, 89, .6); }
-        .sw-nav a.active { background: var(--sw-bg); color: var(--sw-dark); font-weight: 500; }
+        .sw-nav a::before {
+            position: absolute; z-index: -1; inset: 0; content: "";
+            border-radius: inherit; background: rgba(107, 128, 89, .6);
+            opacity: 0; transform: translateX(-8px) scale(.98);
+            transition: opacity .25s ease, transform .35s cubic-bezier(.2, .7, .25, 1);
+        }
+        .sw-nav a::after {
+            position: absolute; left: 5px; top: 50%; width: 3px; height: 16px;
+            content: ""; border-radius: 999px; background: var(--sw-dark);
+            opacity: 0; transform: translateY(-50%) scaleY(.5);
+            transition: opacity .2s ease, transform .3s cubic-bezier(.2, .7, .25, 1);
+        }
+        .sw-nav a i { font-size: 18px; transition: transform .3s cubic-bezier(.2, .7, .25, 1); }
+        .sw-nav a:hover { transform: translateX(3px); }
+        .sw-nav a:hover::before { opacity: 1; transform: translateX(0) scale(1); }
+        .sw-nav a:hover i { transform: translateX(2px); }
+        .sw-nav a:active { transform: translateX(3px) scale(.98); }
+        .sw-nav a.active { color: var(--sw-dark); font-weight: 500; }
+        .sw-nav a.active::before { background: var(--sw-bg); opacity: 1; transform: translateX(0) scale(1); }
+        .sw-nav a.active::after { opacity: 1; transform: translateY(-50%) scaleY(1); }
         .sw-logout {
             position: sticky; bottom: 0; z-index: 1;
             margin-top: auto; padding: 12px 0 14px 12px; background: var(--sw-sidebar);

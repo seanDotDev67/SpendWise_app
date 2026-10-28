@@ -21,7 +21,7 @@
             @error('email') <div class="field-error">{{ $message }}</div> @enderror
         </div>
 
-        <button type="submit" class="btn-main">Send reset link</button>
+        <button type="submit" class="btn-main">Send code</button>
         <a href="{{ route('login') }}" class="back-link">← Back to sign in</a>
     </form>
 @endsection
