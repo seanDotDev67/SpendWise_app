@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,7 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::view('/transactions/page', 'transactions.index')->name('transactions.page');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::post('/reports/assistant', [ReportController::class, 'assistant'])->middleware('throttle:30,1')->name('reports.assistant');
+    Route::get('/transactions/page', [TransactionController::class, 'page'])->name('transactions.page');
     Route::resource('transactions', TransactionController::class)->only(['index', 'store', 'update', 'destroy']);
 });
 
