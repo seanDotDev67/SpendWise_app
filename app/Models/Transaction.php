@@ -7,7 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
-    protected $fillable = ['user_id', 'category_id', 'amount', 'type', 'description', 'date'];
+    protected $fillable = [
+        'user_id',
+        'category_id',
+        'amount',
+        'type',
+        'description',
+        'date',
+        'payment_method',
+        'notes',
+    ];
 
     protected $casts = [
         'amount' => 'decimal:2',
