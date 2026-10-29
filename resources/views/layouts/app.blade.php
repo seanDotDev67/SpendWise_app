@@ -15,9 +15,13 @@
 
     <style>
         :root {
-            --sw-bg: #EBE3D0;
-            --sw-sidebar: #7F9468;
-            --sw-sidebar-dark: #6B8059;
+            /* Same viewport-based unit as the Categories page: 1 unit = 1% of the 1728px design width */
+            --sw-u: max(min(1vw, 1.547vh), 5px);
+            --sw-side-w: calc(var(--sw-u) * 19);
+            --sw-bg: #e8e1cc;
+            --sw-cream: #fffbe8;
+            --sw-sidebar: #8b9b72;
+            --sw-sidebar-dark: #7e8e65;
             --sw-dark: #2F4A3A;
             --sw-card: #FAFAF8;
             --sw-card-beige: #F4F0E4;
@@ -26,71 +30,60 @@
             --sw-track: #DAD8D2;
         }
 
-        body { min-width: 320px; background: var(--sw-bg); color: var(--sw-dark); font-family: 'Inter', sans-serif; }
+        body { min-width: 320px; background: linear-gradient(90deg, var(--sw-cream) 0, var(--sw-cream) var(--sw-side-w), var(--sw-bg) 100%) fixed; animation: sw-fade .4s ease-out; color: var(--sw-dark); font-family: 'Inter', sans-serif; }
         .serif { font-family: 'Cormorant Garamond', serif; }
         .sw-app { min-height: 100vh; }
         .sw-main { min-width: 0; }
         @media (min-width: 992px) {
             .sw-app > .sw-main {
-                flex: 0 0 calc(100% - 180px);
-                width: calc(100% - 180px);
-                margin-left: 180px;
+                flex: 0 0 calc(100% - var(--sw-side-w));
+                width: calc(100% - var(--sw-side-w));
+                margin-left: var(--sw-side-w);
             }
         }
 
         /* ================= SIDEBAR ================= */
         .sw-sidebar {
             position: fixed; inset: 0 auto 0 0; z-index: 1020;
-            width: 180px; height: 100vh; height: 100dvh; flex-shrink: 0;
-            background: var(--sw-sidebar); border-radius: 0 40px 40px 0;
-            display: flex; flex-direction: column; overflow-y: auto;
+            width: var(--sw-side-w); height: 100vh; height: 100dvh; flex-shrink: 0;
+            background: var(--sw-sidebar); border-radius: 0 calc(var(--sw-u) * 3.7) calc(var(--sw-u) * 3.7) 0;
+            display: flex; flex-direction: column; overflow: hidden;
         }
         .sw-brand {
-            background: var(--sw-sidebar-dark); color: #FAF7EE; text-align: center;
-            padding: 12px 16px 15px; border-bottom-right-radius: 32px;
+            height: calc(var(--sw-u) * 7.3); flex: none; display: flex; align-items: center; gap: calc(var(--sw-u) * .9);
+            padding: 0 calc(var(--sw-u) * 1) 0 calc(var(--sw-u) * 1.8); background: var(--sw-sidebar-dark);
+            color: #fff; text-decoration: none;
         }
-        .sw-brand .logo { width: 25px; height: 25px; object-fit: contain; display: block; margin: 0 auto 5px; }
-        .sw-brand h1 { font-size: 25px; font-weight: 600; line-height: 1; margin: 4px 0 0; }
-        .sw-brand small { font-size: 8px; }
-        .sw-nav { margin-top: 14px; padding-left: 12px; }
+        .sw-brand .logo { width: calc(var(--sw-u) * 4); height: auto; display: block; }
+        .sw-brand h1 { font-size: calc(var(--sw-u) * 2.4); font-weight: 600; line-height: 1; margin: 0; color: #fff; }
+        .sw-brand small { display: block; font-size: calc(var(--sw-u) * .95); color: #f3f3e8; margin-top: calc(var(--sw-u) * .25); white-space: nowrap; }
+        .sw-nav { margin-top: calc(var(--sw-u) * 4.6); flex: none; }
         .sw-nav a {
-            position: relative; isolation: isolate;
-            display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 14px;
-            color: #FAF7EE; text-decoration: none; font-size: 14px; border-radius: 30px 0 0 30px;
-            transition: color .3s ease, transform .3s cubic-bezier(.2, .7, .25, 1);
+            position: relative;
+            display: flex; align-items: center; gap: calc(var(--sw-u) * 2.2); height: calc(var(--sw-u) * 4.6); padding-left: calc(var(--sw-u) * 3.4);
+            color: #fff; text-decoration: none; font-size: calc(var(--sw-u) * 1.35); font-weight: 500;
+            transition: background .25s ease;
         }
-        .sw-nav a::before {
-            position: absolute; z-index: -1; inset: 0; content: "";
-            border-radius: inherit; background: rgba(107, 128, 89, .6);
-            opacity: 0; transform: translateX(-8px) scale(.98);
-            transition: opacity .25s ease, transform .35s cubic-bezier(.2, .7, .25, 1);
+        .sw-nav a i { font-size: calc(var(--sw-u) * 1.7); }
+        .sw-nav a:hover { background: rgba(255, 255, 255, .08); }
+        .sw-nav a.active {
+            margin-left: calc(var(--sw-u) * 1.4); padding-left: calc(var(--sw-u) * 2);
+            background: var(--sw-cream); border-radius: calc(var(--sw-u) * 2.3) 0 0 calc(var(--sw-u) * 2.3);
+            color: var(--sw-dark); font-weight: 600;
         }
-        .sw-nav a::after {
-            position: absolute; left: 5px; top: 50%; width: 3px; height: 16px;
-            content: ""; border-radius: 999px; background: var(--sw-dark);
-            opacity: 0; transform: translateY(-50%) scaleY(.5);
-            transition: opacity .2s ease, transform .3s cubic-bezier(.2, .7, .25, 1);
+        .sw-nav a.active::before, .sw-nav a.active::after {
+            content: ""; position: absolute; right: 0; width: calc(var(--sw-u) * 3.4); height: calc(var(--sw-u) * 3.4); pointer-events: none;
         }
-        .sw-nav a i { font-size: 18px; transition: transform .3s cubic-bezier(.2, .7, .25, 1); }
-        .sw-nav a:hover { transform: translateX(3px); }
-        .sw-nav a:hover::before { opacity: 1; transform: translateX(0) scale(1); }
-        .sw-nav a:hover i { transform: translateX(2px); }
-        .sw-nav a:active { transform: translateX(3px) scale(.98); }
-        .sw-nav a.active { color: var(--sw-dark); font-weight: 500; }
-        .sw-nav a.active::before { background: var(--sw-bg); opacity: 1; transform: translateX(0) scale(1); }
-        .sw-nav a.active::after { opacity: 1; transform: translateY(-50%) scaleY(1); }
-        .sw-logout {
-            position: sticky; bottom: 0; z-index: 1;
-            margin-top: auto; padding: 12px 0 14px 12px; background: var(--sw-sidebar);
-        }
+        .sw-nav a.active::before { top: calc(var(--sw-u) * -3.4); background: radial-gradient(circle at 0 0, transparent calc(var(--sw-u) * 3.4), var(--sw-cream) calc(var(--sw-u) * 3.4)); }
+        .sw-nav a.active::after { bottom: calc(var(--sw-u) * -3.4); background: radial-gradient(circle at 0 100%, transparent calc(var(--sw-u) * 3.4), var(--sw-cream) calc(var(--sw-u) * 3.4)); }
+        .sw-logout { margin: auto 0 calc(var(--sw-u) * 3); }
         .sw-logout button {
-            display: flex; width: 100%; align-items: center; gap: 12px;
-            padding: 8px 10px 8px 14px; border: 0; border-radius: 30px 0 0 30px;
-            background: transparent; color: #FAF7EE; text-align: left; font: inherit; font-size: 14px;
-            transition: background-color .2s ease;
+            display: flex; width: 100%; align-items: center; gap: calc(var(--sw-u) * 2.2); height: calc(var(--sw-u) * 4.6); padding: 0 0 0 calc(var(--sw-u) * 3.4);
+            border: 0; background: transparent; color: #fff; text-align: left; font: inherit; font-size: calc(var(--sw-u) * 1.35); font-weight: 500;
+            transition: background .25s ease;
         }
-        .sw-logout button i { font-size: 18px; }
-        .sw-logout button:hover { background: rgba(107, 128, 89, .6); }
+        .sw-logout button i { font-size: calc(var(--sw-u) * 1.7); }
+        .sw-logout button:hover { background: rgba(255, 255, 255, .08); }
         .sw-logout button:focus-visible { outline: 3px solid rgba(250, 247, 238, .8); outline-offset: -4px; }
 
         /* ================= TOPBAR ================= */
@@ -135,7 +128,7 @@
         .btn-sw-dark:focus-visible, .btn-sw-light:focus-visible, .sw-nav a:focus-visible, .sw-mobile-nav a:focus-visible { outline: 3px solid rgba(47, 74, 58, .45); outline-offset: 3px; }
 
         /* ================= PAGE TRANSITION ================= */
-        .sw-page-content { animation: sw-page-enter .55s cubic-bezier(.2, .7, .25, 1) both; }
+        @keyframes sw-fade { from { opacity: 0; } to { opacity: 1; } }
         @keyframes sw-page-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ===== FIT-TO-ONE-SCREEN MODE (only when page passes ['fit' => true]) ===== */
