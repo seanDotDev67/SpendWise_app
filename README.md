@@ -390,6 +390,24 @@ Then run `php artisan config:clear` and request a reset code for an account emai
 
 Never post database passwords, `APP_KEY`, AI provider API keys, or other secrets in a GitHub issue, pull request, screenshot, or team chat.
 
+### SpendWise AI with a local Ollama model (default)
+
+SpendWise AI runs on a local open-weight model through [Ollama](https://ollama.com). No Gemini key is needed. Totals and trends are calculated in PHP/SQL; the model only explains them.
+
+```powershell
+winget install Ollama.Ollama      # or use the installer from ollama.com
+ollama pull llama3.2:3b
+ollama list                       # the model must appear here
+curl.exe http://localhost:11434/api/tags
+php artisan config:clear
+```
+
+Optional `.env` values (defaults shown in `.env.example`): `ASSISTANT_PROVIDER=ollama`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT`.
+
+`localhost` means the machine running Laravel. On a remote server, Ollama must run on that server (or a private host it can reach), and `OLLAMA_BASE_URL` must point to it. Never expose port 11434 publicly without a firewall or authentication. Many shared hosts cannot run a local model.
+
+Gemini is optional: set `ASSISTANT_PROVIDER=gemini` and `GEMINI_API_KEY`. There is no automatic fallback between providers.
+
 ---
 
 ## Database Overview

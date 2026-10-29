@@ -22,8 +22,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('/search', GlobalSearchController::class)->middleware('throttle:60,1')->name('search');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::post('/reports/assistant', [ReportController::class, 'assistant'])->middleware('throttle:30,1')->name('reports.assistant');
+    Route::post('/reports/assistant/stream', [ReportController::class, 'assistantStream'])->middleware('throttle:30,1')->name('reports.assistant.stream');
+    Route::post('/reports/assistant/reset', [ReportController::class, 'resetAssistant'])->name('reports.assistant.reset');
     Route::get('/transactions/page', [TransactionController::class, 'page'])->name('transactions.page');
     Route::resource('transactions', TransactionController::class)->only(['index', 'store', 'update', 'destroy']);
 });

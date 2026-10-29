@@ -403,10 +403,153 @@
                 animation: none !important;
                 transition-duration: .01ms !important;
             }
+            .splash { display: none !important; }
         }
+
+        /* ============ SPLASH ============ */
+        .splash {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: none;
+            place-items: center;
+            overflow: hidden;
+            cursor: pointer;
+            color: #f3f6ee;
+        }
+        .splash-on .splash { display: grid; }
+
+        /* two curtain panels that slide apart at the end */
+        .sp-panel {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50.2%;
+            background:
+                linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px) 0 0 / 4.4rem 4.4rem,
+                linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px) 0 0 / 4.4rem 4.4rem,
+                #243026;
+            transition: transform 1s cubic-bezier(.77, 0, .18, 1);
+        }
+        .sp-l { left: 0; }
+        .sp-r { right: 0; }
+        .splash.is-open .sp-l { transform: translateX(-100%); }
+        .splash.is-open .sp-r { transform: translateX(100%); }
+
+        .sp-content {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: opacity .45s ease, transform .6s ease;
+        }
+        .splash.is-open .sp-content { opacity: 0; transform: scale(1.08); }
+
+        .sp-glow {
+            position: absolute;
+            top: -6rem;
+            width: 46rem;
+            height: 46rem;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139, 155, 114, .38) 0, rgba(139, 155, 114, 0) 65%);
+            animation: spGlow 3s ease-in-out infinite alternate;
+        }
+        .sp-mark {
+            position: relative;
+            width: 15rem;
+            height: 15rem;
+            display: grid;
+            place-items: center;
+        }
+        .sp-mark svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+        .sp-ring-bg { fill: none; stroke: rgba(255, 255, 255, .1); stroke-width: 1.5; }
+        .sp-ring {
+            fill: none;
+            stroke: #e6cd6c;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-dasharray: 339.3;
+            stroke-dashoffset: 339.3;
+            animation: spRing 2.2s cubic-bezier(.6, .05, .25, 1) .4s forwards;
+        }
+        .sp-mark img {
+            width: 7.4rem;
+            height: auto;
+            padding: 1.6rem;
+            box-sizing: content-box;
+            border-radius: 50%;
+            background: #f6f3e4;
+            box-shadow: 0 1.2rem 2.6rem rgba(0, 0, 0, .35);
+            animation: spLogo 1s cubic-bezier(.2, .8, .2, 1) .2s both;
+        }
+        .sp-brand {
+            display: flex;
+            margin-top: 2.4rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 6.4rem;
+            line-height: 1;
+            letter-spacing: .02em;
+        }
+        .sp-brand span {
+            display: inline-block;
+            opacity: 0;
+            animation: spLetter .7s cubic-bezier(.2, .8, .2, 1) both;
+            animation-delay: calc(.9s + var(--i) * .06s);
+        }
+        .sp-rule {
+            width: 0;
+            height: 1px;
+            margin: 1.8rem 0 1.5rem;
+            background: linear-gradient(90deg, transparent, #e6cd6c, transparent);
+            animation: spRule 1s ease-out 1.5s forwards;
+        }
+        .sp-tag {
+            font-size: 1.35rem;
+            font-weight: 500;
+            letter-spacing: .34em;
+            text-transform: uppercase;
+            color: #c9d4b8;
+            animation: spFade .9s ease-out 1.7s both;
+        }
+        .sp-count {
+            margin-top: 3.2rem;
+            font-size: 1.2rem;
+            font-weight: 500;
+            letter-spacing: .2em;
+            font-variant-numeric: tabular-nums;
+            color: rgba(243, 246, 238, .55);
+            animation: spFade .6s ease-out 1.2s both;
+        }
+
+        @keyframes spRing { to { stroke-dashoffset: 0; } }
+        @keyframes spLogo { from { opacity: 0; transform: scale(.7) translateY(1rem); } to { opacity: 1; transform: none; } }
+        @keyframes spLetter { from { opacity: 0; transform: translateY(1.8rem); filter: blur(.5rem); } to { opacity: 1; transform: none; filter: blur(0); } }
+        @keyframes spRule { to { width: 22rem; } }
+        @keyframes spFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spGlow { from { opacity: .6; transform: scale(.92); } to { opacity: 1; transform: scale(1.06); } }
     </style>
+    <script>
+        // Show the splash once per browser session
+        try { if (!sessionStorage.getItem('swSplash')) document.documentElement.classList.add('splash-on'); } catch (e) {}
+    </script>
 </head>
 <body>
+    <div class="splash" id="splash" role="presentation" aria-hidden="true">
+        <div class="sp-panel sp-l"></div>
+        <div class="sp-panel sp-r"></div>
+        <div class="sp-content">
+            <div class="sp-glow"></div>
+            <div class="sp-mark">
+                <svg viewBox="0 0 120 120"><circle class="sp-ring-bg" cx="60" cy="60" r="54" /><circle class="sp-ring" cx="60" cy="60" r="54" /></svg>
+                <img src="{{ asset('images/spendwise-logo.png') }}" alt="">
+            </div>
+            <div class="sp-brand">@foreach (str_split('SpendWise') as $i => $letter)<span style="--i: {{ $i }}">{{ $letter }}</span>@endforeach</div>
+            <div class="sp-rule"></div>
+            <div class="sp-tag">Spend Smart. Live Wise</div>
+            <div class="sp-count" id="spCount">0%</div>
+        </div>
+    </div>
     <div class="stage">
         <div class="floor"></div>
         <div class="scene">
@@ -475,6 +618,29 @@
         </div>
     </div>
     <script>
+        // Splash: count up, then open the curtain; click to skip
+        (function () {
+            const splash = document.getElementById('splash');
+            const count = document.getElementById('spCount');
+            try { sessionStorage.setItem('swSplash', '1'); } catch (e) {}
+            let opened = false;
+            const open = function () {
+                if (opened) return;
+                opened = true;
+                splash.classList.add('is-open');
+                setTimeout(function () { splash.remove(); document.documentElement.classList.remove('splash-on'); }, 1100);
+            };
+            const start = performance.now(), from = 1200, span = 1900;
+            (function tick(now) {
+                if (opened) return;
+                const p = Math.min(Math.max((now - start - from) / span, 0), 1);
+                count.textContent = Math.round(p * 100) + '%';
+                if (p < 1) requestAnimationFrame(tick);
+            })(start);
+            setTimeout(open, 3300);
+            splash.addEventListener('click', open);
+        })();
+
         // Get Started: drop the coin into the wallet first, then go to the login page
         (function () {
             const btn = document.getElementById('startBtn');
@@ -490,4 +656,3 @@
     </script>
 </body>
 </html>
-```[cite: 1]
