@@ -292,10 +292,10 @@
                         <div class="sw-card mb-3 sw-entrance">
                             <h3 class="serif fw-semibold fs-5">Quick Actions</h3>
                             <div class="d-grid gap-2 mt-2">
-                                <a href="{{ Route::has('transactions.create') ? route('transactions.create') : '#' }}"
-                                   class="btn btn-sw-dark d-flex align-items-center justify-content-center gap-2">
+                                <button type="button" data-bs-toggle="modal" data-bs-target="#addTransactionModal"
+                                        class="btn btn-sw-dark d-flex align-items-center justify-content-center gap-2">
                                     <i class="bi bi-plus-lg"></i> Add Transaction
-                                </a>
+                                </button>
                                 <a href="{{ Route::has('budgets.index') ? route('budgets.index') : '#' }}"
                                    class="btn btn-sw-light d-flex align-items-center gap-3 text-start">
                                     <i class="bi bi-bullseye fs-5"></i> Set Budget
@@ -333,4 +333,6 @@
                         </div>
                     </aside>
 </div>
+
+@include('transactions.partials.add-modal', ['returnToDashboard' => true])
 @endsection

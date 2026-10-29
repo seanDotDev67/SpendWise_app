@@ -64,6 +64,7 @@ class TransactionController extends Controller
             'date' => ['required', 'date'],
             'payment_method' => ['nullable', 'string', 'max:50'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'return_to' => ['nullable', Rule::in(['dashboard'])],
         ]);
 
         $category = $request->user()->categories()->findOrFail($validated['category_id']);
@@ -80,7 +81,11 @@ class TransactionController extends Controller
             return response()->json($transaction->load('category'), 201);
         }
 
-        return redirect()->route('transactions.page')->with('status', 'Transaction saved.');
+        $destination = ($validated['return_to'] ?? null) === 'dashboard'
+            ? 'dashboard'
+            : 'transactions.page';
+
+        return redirect()->route($destination)->with('status', 'Transaction saved.');
     }
 
     public function update(Request $request, Transaction $transaction): JsonResponse|RedirectResponse

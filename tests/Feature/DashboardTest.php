@@ -51,6 +51,70 @@ class DashboardTest extends TestCase
             ->assertSee('aria-current="date" data-date="2026-10-26"', false);
     }
 
+    public function test_dashboard_converts_category_palette_names_to_colors_in_both_spending_charts(): void
+    {
+        $user = User::factory()->create();
+        $category = DB::table('categories')->insertGetId([
+            'user_id' => $user->id,
+            'name' => 'Food',
+            'type' => 'expense',
+            'color' => 'forest',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('transactions')->insert([
+            'user_id' => $user->id,
+            'category_id' => $category,
+            'amount' => 1200,
+            'type' => 'expense',
+            'description' => 'Groceries',
+            'date' => now()->toDateString(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('style="--sw-donut-gradient: conic-gradient(#3b4a3c 0% 100%)"', false)
+            ->assertSee('background: #3b4a3c', false)
+            ->assertDontSee('background: forest', false);
+    }
+
+    public function test_dashboard_add_transaction_quick_action_opens_shared_form_and_returns_after_saving(): void
+    {
+        $user = User::factory()->create();
+        $category = $user->categories()->create([
+            'name' => 'Food',
+            'type' => 'expense',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('data-bs-target="#addTransactionModal"', false)
+            ->assertSee('id="addTransactionModal"', false)
+            ->assertSee('name="return_to" value="dashboard"', false)
+            ->assertSee('Food');
+
+        $this->post(route('transactions.store'), [
+            'category_id' => $category->id,
+            'amount' => '25.50',
+            'type' => 'expense',
+            'description' => 'Lunch',
+            'date' => now()->toDateString(),
+            'return_to' => 'dashboard',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertDatabaseHas('transactions', [
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'description' => 'Lunch',
+            'amount' => '25.50',
+        ]);
+    }
+
     public function test_dashboard_totals_and_spending_are_scoped_to_the_signed_in_user(): void
     {
         $user = User::factory()->create(['name' => 'Dashboard User']);
