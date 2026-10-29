@@ -1,9 +1,11 @@
 <aside class="sw-sidebar d-none d-lg-flex">
-    <div class="sw-brand">
+    <a class="sw-brand" href="{{ Route::has('dashboard') ? route('dashboard') : '#' }}">
         <img class="logo" src="{{ asset('images/spendwise-logo.png') }}" alt="SpendWise logo">
-        <h1 class="serif">SpendWise</h1>
-        <small>Spend Smart. Live Wise</small>
-    </div>
+        <div>
+            <h1 class="serif">SpendWise</h1>
+            <small>Spend Smart. Live Wise</small>
+        </div>
+    </a>
 
     <nav class="sw-nav" aria-label="Main navigation">
         @foreach ($navigationItems as [$label, $routeName, $icon])

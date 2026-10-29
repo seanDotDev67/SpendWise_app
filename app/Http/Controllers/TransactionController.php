@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\RedirectResponse;
 
 class TransactionController extends Controller
 {
@@ -49,7 +50,7 @@ class TransactionController extends Controller
         );
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'category_id' => [
@@ -75,10 +76,14 @@ class TransactionController extends Controller
 
         $transaction = $request->user()->transactions()->create($validated);
 
-        return response()->json($transaction->load('category'), 201);
+        if ($request->expectsJson()) {
+            return response()->json($transaction->load('category'), 201);
+        }
+
+        return redirect()->route('transactions.page')->with('status', 'Transaction saved.');
     }
 
-    public function update(Request $request, Transaction $transaction): JsonResponse
+    public function update(Request $request, Transaction $transaction): JsonResponse|RedirectResponse
     {
         abort_unless((int) $transaction->user_id === (int) auth()->id(), 404);
 
@@ -106,15 +111,23 @@ class TransactionController extends Controller
 
         $transaction->update($validated);
 
-        return response()->json($transaction->load('category'));
+        if ($request->expectsJson()) {
+            return response()->json($transaction->load('category'));
+        }
+
+        return redirect()->route('transactions.page')->with('status', 'Transaction updated.');
     }
 
-    public function destroy(Transaction $transaction): JsonResponse
+    public function destroy(Request $request, Transaction $transaction): JsonResponse|RedirectResponse
     {
         abort_unless((int) $transaction->user_id === (int) auth()->id(), 404);
 
         $transaction->delete();
 
-        return response()->json(null, 204);
+        if ($request->expectsJson()) {
+            return response()->json(null, 204);
+        }
+
+        return redirect()->route('transactions.page')->with('status', 'Transaction deleted.');
     }
 }
