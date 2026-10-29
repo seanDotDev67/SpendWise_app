@@ -29,6 +29,8 @@ class DashboardTest extends TestCase
             ->assertSee('sw-mobile-nav')
             ->assertSee('min-height: 100vh', false)
             ->assertSee('sw-entrance')
+            ->assertSee('sw-donut-sweep')
+            ->assertSee('mask: conic-gradient', false)
             ->assertSee('Monthly cash flow')
             ->assertSee('prefers-reduced-motion')
             ->assertSee(route('profile.edit'), false)
@@ -206,5 +208,90 @@ class DashboardTest extends TestCase
             ->assertSee('Groceries')
             ->assertDontSee('Private transaction')
             ->assertDontSee('7,000.00');
+    }
+
+    public function test_dashboard_coach_gives_grounded_saving_guidance_from_monthly_activity(): void
+    {
+        $user = User::factory()->create();
+        $incomeCategory = $user->categories()->create(['name' => 'Salary', 'type' => 'income']);
+        $expenseCategory = $user->categories()->create(['name' => 'Food', 'type' => 'expense']);
+
+        $user->transactions()->create([
+            'category_id' => $incomeCategory->id,
+            'amount' => 5000,
+            'type' => 'income',
+            'description' => 'Payday',
+            'date' => now()->toDateString(),
+        ]);
+        $user->transactions()->create([
+            'category_id' => $expenseCategory->id,
+            'amount' => 1200,
+            'type' => 'expense',
+            'description' => 'Groceries',
+            'date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('SpendWise AI Coach')
+            ->assertSee('There may be room to save')
+            ->assertSee('₱3,800.00 more recorded income than expenses')
+            ->assertSee('consider setting aside a comfortable portion')
+            ->assertSee('Food')
+            ->assertSee('₱1,200.00')
+            ->assertSee('Guidance uses recorded transactions only.');
+    }
+
+    public function test_dashboard_coach_does_not_assume_affordability_when_income_is_unrecorded(): void
+    {
+        $user = User::factory()->create();
+        $category = $user->categories()->create(['name' => 'Transport', 'type' => 'expense']);
+        $user->transactions()->create([
+            'category_id' => $category->id,
+            'amount' => 40,
+            'type' => 'expense',
+            'description' => 'Fare',
+            'date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Let’s get a fuller picture')
+            ->assertSee('I can’t tell whether your spending is affordable')
+            ->assertSee('keep essentials a priority')
+            ->assertSee('Transport');
+    }
+
+    public function test_dashboard_coach_handles_expenses_above_recorded_income_without_judgment(): void
+    {
+        $user = User::factory()->create();
+        $incomeCategory = $user->categories()->create(['name' => 'Salary', 'type' => 'income']);
+        $expenseCategory = $user->categories()->create(['name' => 'Housing', 'type' => 'expense']);
+
+        $user->transactions()->create([
+            'category_id' => $incomeCategory->id,
+            'amount' => 1000,
+            'type' => 'income',
+            'description' => 'Payday',
+            'date' => now()->toDateString(),
+        ]);
+        $user->transactions()->create([
+            'category_id' => $expenseCategory->id,
+            'amount' => 1200,
+            'type' => 'expense',
+            'description' => 'Rent',
+            'date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Spending is ahead of recorded income')
+            ->assertSee('₱200.00 more than your recorded income')
+            ->assertSee('This may be a timing issue or missing income')
+            ->assertSee('before making cuts to essentials')
+            ->assertSee('Housing');
     }
 }
