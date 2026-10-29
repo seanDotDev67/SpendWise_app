@@ -41,9 +41,27 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI') ?: rtrim(env('APP_URL', 'http://localhost'), '/').'/auth/google/callback',
     ],
 
+    'assistant' => [
+        // "ollama" (local, default) or "gemini" (optional, explicit opt-in only).
+        'provider' => env('ASSISTANT_PROVIDER', 'ollama'),
+    ],
+
+    'ollama' => [
+        // "localhost" is the machine running Laravel, not the visitor's browser.
+        'base_url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+        'model' => env('OLLAMA_MODEL', 'llama3.2:3b'),
+        'connect_timeout' => (int) env('OLLAMA_CONNECT_TIMEOUT', 5),
+        'timeout' => (int) env('OLLAMA_TIMEOUT', 120),
+        'keep_alive' => env('OLLAMA_KEEP_ALIVE', '5m'),
+        'num_ctx' => (int) env('OLLAMA_NUM_CTX', 4096),
+        'num_predict' => (int) env('OLLAMA_NUM_PREDICT', 300),
+        'temperature' => (float) env('OLLAMA_TEMPERATURE', 0.3),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+        'endpoint' => env('GEMINI_API_ENDPOINT', 'https://generativelanguage.googleapis.com/v1beta/models'),
     ],
 
 ];
