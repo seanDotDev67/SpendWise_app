@@ -283,6 +283,16 @@
     .report-ai-panel { position: sticky; top: 12px; overflow: hidden; }
     .report-ai-heading { padding: 12px; background: #e9eee5; }
     .report-ai-title { display: flex; align-items: center; gap: 9px; }
+    .report-ai-actions { display: flex; align-items: center; gap: 5px; }
+    .report-ai-new {
+        padding: 5px 8px;
+        border: 1px solid var(--report-border);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--report-ink);
+        font: inherit;
+        font-size: 9px;
+    }
     .report-ai-mark {
         display: grid;
         width: 32px;
@@ -309,7 +319,7 @@
         font-size: 10px;
         line-height: 1.55;
         overflow-wrap: anywhere;
-        white-space: pre-line;
+        white-space: pre-wrap;
     }
     .report-ai-welcome strong { display: block; margin-bottom: 3px; }
     .report-ai-section-label { margin: 12px 0 6px; font-size: 9px; font-weight: 700; }
@@ -333,6 +343,13 @@
         margin: 10px 0;
     }
     .report-chat-bubble { max-width: 96%; }
+    .report-chat-bubble.md { white-space: normal; }
+    .report-chat-bubble.md p { margin: 0; }
+    .report-chat-bubble.md p + p, .report-chat-bubble.md p + ul, .report-chat-bubble.md p + ol,
+    .report-chat-bubble.md ul + p, .report-chat-bubble.md ol + p { margin-top: 8px; }
+    .report-chat-bubble.md ul, .report-chat-bubble.md ol { margin: 6px 0 0; padding-left: 20px; }
+    .report-chat-bubble.md li + li { margin-top: 3px; }
+    .report-chat-bubble.md code { padding: 1px 5px; border-radius: 5px; background: rgba(47, 112, 79, 0.12); font-size: 0.92em; }
     .report-chat-bubble.user { justify-self: end; border-color: #2f704f; background: #2f704f; color: #fff; }
     .report-chat-bubble.error { border-color: #e47782; color: #a53e49; }
     .report-chat-loading { color: var(--report-muted); font-size: 9px; }
@@ -355,6 +372,7 @@
         color: #fff;
     }
     .report-ai-note { margin: 9px 0 0; color: var(--report-muted); font-size: 8px; line-height: 1.45; }
+    .report-ai-config-warning { margin: 8px 0 0; color: #a53e49; font-size: 9px; line-height: 1.45; }
     .report-focus { grid-column: 1 / -1; background: #f3f0e5; }
 
     @media (max-width: 1199.98px) {
@@ -601,41 +619,55 @@
                         <span class="report-ai-mark"><i class="bi bi-stars" aria-hidden="true"></i></span>
                         <div>
                             <h2>SpendWise AI</h2>
-                            <p>Your personal finance assistant</p>
+                            <p>Ask me anything — finance or otherwise</p>
                         </div>
                     </div>
-                    <button class="report-ai-collapse" id="reportAiCollapse" type="button"
-                            aria-expanded="true" aria-controls="reportAiBody" aria-label="Collapse assistant">
-                        <i class="bi bi-chevron-up" aria-hidden="true"></i>
-                    </button>
+                    <div class="report-ai-actions">
+                        <button class="report-ai-new" id="reportAiNew" type="button">New chat</button>
+                        <button class="report-ai-collapse" id="reportAiCollapse" type="button"
+                                aria-expanded="true" aria-controls="reportAiBody" aria-label="Collapse assistant">
+                            <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="report-ai-body" id="reportAiBody">
                     <div class="report-ai-welcome">
                         <strong>{{ $assistantGreeting }}, {{ $assistantFirstName }}! 👋</strong>
-                        I’m SpendWise AI. Ask about your recorded finances for the selected date range.
+                        I can help with everyday questions, learning, coding, or your finances. When you ask about your finances, I’ll use your saved records for the selected date range.
                     </div>
                     <div class="report-ai-section-label">Try asking me:</div>
                     <div class="report-ai-suggestions">
                         @foreach ([
-                            'How much did I spend this month?',
-                            'Which category has the highest spending?',
-                            'Am I staying within my budget?',
-                            'Show me my spending trends.',
-                            'How can I save more money?',
+                            'Where does most of my money go?',
+                            'How can I reduce my expenses?',
+                            'Am I staying within my budgets?',
+                            'Compare my spending this month and last month.',
+                            'Help me create a savings plan.',
+                            'Explain compound interest.',
+                            'Can you help me with a programming question?',
                         ] as $suggestion)
                             <button class="report-ai-suggestion" type="button">{{ $suggestion }}</button>
                         @endforeach
                     </div>
                     <div class="report-chat-log" id="reportChatLog" role="log" aria-live="polite">
-                        <div class="report-chat-bubble">{{ $assistantGreeting }}, {{ $assistantFirstName }}! 👋 I’m glad you’re here. What would you like to explore about your spending today? I’ll use your saved records and let you know if I don’t have enough information.</div>
+                        @forelse ($assistantHistory as $message)
+                            @if (in_array($message['role'] ?? '', ['user', 'assistant'], true) && is_string($message['content'] ?? null))
+                                <div class="report-chat-bubble {{ $message['role'] }}">{{ $message['content'] }}</div>
+                            @endif
+                        @empty
+                            <div class="report-chat-bubble assistant">{{ $assistantGreeting }}, {{ $assistantFirstName }}! 👋 I’m here to help. Ask me anything, or ask about your finances for a thoughtful look at your recorded data.</div>
+                        @endforelse
                     </div>
                     <form class="report-chat-form" id="reportChatForm">
-                        <label class="visually-hidden" for="reportChatInput">Ask about your finances</label>
-                        <input id="reportChatInput" type="text" maxlength="500" required
-                               placeholder="Ask me anything about your finances…">
+                        <label class="visually-hidden" for="reportChatInput">Ask SpendWise AI anything</label>
+                        <input id="reportChatInput" type="text" maxlength="1000" required
+                               placeholder="Ask me anything…">
                         <button type="submit" aria-label="Send message"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
                     </form>
-                    <p class="report-ai-note">Exact totals come from your saved records. When configured, Gemini receives your question and aggregate totals, category names and totals, and monthly summaries; transaction descriptions and account identity are not sent. Budget checks aren’t available until budget records are supported.</p>
+                    @unless ($assistantConfigured)
+                        <p class="report-ai-config-warning" role="status">SpendWise AI needs to be configured by the administrator before it can respond. Your conversation is not sent anywhere until then.</p>
+                    @endunless
+                    <p class="report-ai-note">Your conversation is kept in your signed-in session. Financial questions use only aggregate totals from your records; transaction descriptions and account identity are not sent. Budget records are not currently available.</p>
                 </div>
             </aside>
         </div>
@@ -650,7 +682,85 @@ document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('reportChatInput');
     const log = document.getElementById('reportChatLog');
     const collapseButton = document.getElementById('reportAiCollapse');
+    const newChatButton = document.getElementById('reportAiNew');
     const panel = document.getElementById('reportAiPanel');
+
+    function appendInline(parent, text) {
+        // Supports **bold**, __bold__, *italic*, _italic_ and `code`; everything else stays plain text.
+        const pattern = /(\*\*([^*\n]+?)\*\*|__([^_\n]+?)__|`([^`\n]+?)`|(?<![\w*])\*([^*\s][^*\n]*?)\*(?![\w*])|(?<![\w])_([^_\s][^_\n]*?)_(?![\w]))/g;
+        let last = 0;
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+            if (match.index > last) parent.appendChild(document.createTextNode(text.slice(last, match.index)));
+            let node;
+            if (match[2] !== undefined || match[3] !== undefined) {
+                node = document.createElement('strong');
+                node.textContent = match[2] ?? match[3];
+            } else if (match[4] !== undefined) {
+                node = document.createElement('code');
+                node.textContent = match[4];
+            } else {
+                node = document.createElement('em');
+                node.textContent = match[5] ?? match[6];
+            }
+            parent.appendChild(node);
+            last = pattern.lastIndex;
+        }
+        if (last < text.length) parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+
+    // Builds DOM nodes (never innerHTML), so model output cannot inject markup.
+    function renderMarkdown(target, text) {
+        const fragment = document.createDocumentFragment();
+        let paragraph = null;
+        let list = null;
+
+        const closeBlocks = function () { paragraph = null; list = null; };
+
+        text.replace(/\r\n?/g, '\n').split('\n').forEach(function (rawLine) {
+            const line = rawLine.trimEnd();
+            if (line.trim() === '') { closeBlocks(); return; }
+
+            const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+            const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+            const heading = line.match(/^\s*#{1,6}\s+(.*)$/);
+
+            if (bullet || numbered) {
+                const tag = bullet ? 'UL' : 'OL';
+                if (!list || list.tagName !== tag) {
+                    list = document.createElement(tag.toLowerCase());
+                    fragment.appendChild(list);
+                }
+                paragraph = null;
+                const item = document.createElement('li');
+                appendInline(item, (bullet || numbered)[1]);
+                list.appendChild(item);
+            } else if (heading) {
+                closeBlocks();
+                const block = document.createElement('p');
+                const strong = document.createElement('strong');
+                appendInline(strong, heading[1]);
+                block.appendChild(strong);
+                fragment.appendChild(block);
+            } else {
+                list = null;
+                if (!paragraph) {
+                    paragraph = document.createElement('p');
+                    fragment.appendChild(paragraph);
+                } else {
+                    paragraph.appendChild(document.createElement('br'));
+                }
+                appendInline(paragraph, line);
+            }
+        });
+
+        target.classList.add('md');
+        target.replaceChildren(fragment);
+    }
+
+    log.querySelectorAll('.report-chat-bubble.assistant').forEach(function (bubble) {
+        renderMarkdown(bubble, bubble.textContent);
+    });
 
     function addMessage(text, kind) {
         const message = document.createElement('div');
@@ -666,34 +776,118 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!value || form.dataset.loading === 'true') return;
 
         addMessage(value, 'user');
-        const loading = addMessage('Checking your saved report data…', 'report-chat-loading');
+        const loading = addMessage('Thinking…', 'report-chat-loading');
         form.dataset.loading = 'true';
         form.querySelector('button').disabled = true;
         input.disabled = true;
 
+        let bubble = null;
+        let pending = '';
+        let shown = '';
+        let streamEnded = false;
+        let drainResolve = null;
+        let lastFrame = 0;
+        let rafId = null;
+
+        // Reveal queued text at a steady pace; the speed rises with the backlog so it never lags far behind.
+        const pump = function (now) {
+            rafId = null;
+            const elapsed = Math.min(now - (lastFrame || now), 100);
+            lastFrame = now;
+            if (pending.length > 0 && bubble) {
+                const charsPerSecond = Math.max(40, pending.length * 2.5);
+                const count = Math.max(1, Math.round(charsPerSecond * elapsed / 1000));
+                shown += pending.slice(0, count);
+                pending = pending.slice(count);
+                renderMarkdown(bubble, shown);
+                log.scrollTop = log.scrollHeight;
+            }
+            if (pending.length > 0 || !streamEnded) {
+                rafId = requestAnimationFrame(pump);
+            } else if (drainResolve) {
+                drainResolve();
+            }
+        };
+        const startPump = function () {
+            if (rafId === null) {
+                lastFrame = 0;
+                rafId = requestAnimationFrame(pump);
+            }
+        };
+
         try {
-            const response = await fetch(@json(route('reports.assistant')), {
+            const response = await fetch(@json(route('reports.assistant.stream')), {
                 method: 'POST',
                 headers: {
-                    'Accept': 'application/json',
+                    'Accept': 'application/x-ndjson',
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
+                    page: 'reports',
                     question: value,
                     start_date: @json($startDate),
                     end_date: @json($endDate)
                 })
             });
-            const result = await response.json();
-            if (!response.ok) {
+
+            if (!response.ok || !response.body) {
+                let result = {};
+                try { result = await response.json(); } catch {}
                 throw new Error(result.message || 'The assistant could not answer right now. Please try again.');
             }
 
-            loading.remove();
-            addMessage(result.answer, 'assistant');
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let finished = false;
+            let finalAnswer = '';
+
+            const handle = function (line) {
+                if (!line.trim()) return;
+                let event;
+                try { event = JSON.parse(line); } catch { return; }
+
+                if (event.type === 'token') {
+                    if (!bubble) {
+                        loading.remove();
+                        bubble = addMessage('', 'assistant');
+                    }
+                    pending += event.text;
+                    startPump();
+                } else if (event.type === 'done') {
+                    finished = true;
+                    finalAnswer = event.answer;
+                } else if (event.type === 'error') {
+                    throw new Error(event.message);
+                }
+            };
+
+            while (true) {
+                const { done, value: chunk } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(chunk, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                lines.forEach(handle);
+            }
+            handle(buffer);
+
+            if (!finished) {
+                throw new Error('The assistant response was interrupted. Please try again.');
+            }
+
+            streamEnded = true;
+            if (bubble && pending.length > 0) {
+                await new Promise(function (resolve) { drainResolve = resolve; startPump(); });
+            }
+            if (bubble) renderMarkdown(bubble, finalAnswer);
         } catch (error) {
+            streamEnded = true;
+            pending = '';
+            if (rafId !== null) cancelAnimationFrame(rafId);
             loading.remove();
+            if (bubble) bubble.remove();
             addMessage(error.message || 'Unable to reach the assistant. Please try again.', 'error');
         } finally {
             form.dataset.loading = 'false';
@@ -714,6 +908,31 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', function () {
             ask(button.textContent);
         });
+    });
+
+    newChatButton.addEventListener('click', async function () {
+        if (form.dataset.loading === 'true') return;
+
+        newChatButton.disabled = true;
+        try {
+            const response = await fetch(@json(route('reports.assistant.reset')), {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Unable to start a new conversation. Please try again.');
+            }
+
+            log.replaceChildren();
+            addMessage('Hi! What would you like to talk about?', 'assistant');
+        } catch (error) {
+            addMessage(error.message || 'Unable to start a new conversation. Please try again.', 'error');
+        } finally {
+            newChatButton.disabled = false;
+        }
     });
 
     collapseButton.addEventListener('click', function () {
