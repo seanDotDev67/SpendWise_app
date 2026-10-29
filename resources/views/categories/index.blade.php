@@ -973,6 +973,7 @@
             renderAll();
         })();
     </script>
+    @include('layouts.partials.ai-companion')
 </body>
 
 </html>

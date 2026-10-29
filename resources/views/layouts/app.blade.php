@@ -203,6 +203,7 @@
 </div>
 @endif
 
+@include('layouts.partials.ai-companion')
 @include('layouts.partials.footer')
 </body>
 </html>
