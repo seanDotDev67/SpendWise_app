@@ -1436,17 +1436,12 @@ document.addEventListener('DOMContentLoaded', function () {
         typeFilter?.addEventListener('change', updateTransactions);
         sortFilter?.addEventListener('change', updateTransactions);
 
+        const initialQuery = new URLSearchParams(window.location.search).get('q');
+        if (initialQuery && searchInput) searchInput.value = initialQuery;
+
         updateTransactions();
     }
 
-    // Reopen the Add Transaction modal after server-side validation errors.
-    @if ($errors->any())
-        const addModal = document.getElementById('addTransactionModal');
-
-        if (addModal && window.bootstrap) {
-            bootstrap.Modal.getOrCreateInstance(addModal).show();
-        }
-    @endif
 });
 </script>
 @endsection

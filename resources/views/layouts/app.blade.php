@@ -48,6 +48,7 @@
             width: var(--sw-side-w); height: 100vh; height: 100dvh; flex-shrink: 0;
             background: var(--sw-sidebar); border-radius: 0 calc(var(--sw-u) * 3.7) calc(var(--sw-u) * 3.7) 0;
             display: flex; flex-direction: column; overflow: hidden;
+            line-height: normal; -webkit-font-smoothing: antialiased;
         }
         .sw-brand {
             height: calc(var(--sw-u) * 7.3); flex: none; display: flex; align-items: center; gap: calc(var(--sw-u) * .9);
@@ -56,7 +57,7 @@
         }
         .sw-brand .logo { width: calc(var(--sw-u) * 4); height: auto; display: block; }
         .sw-brand h1 { font-size: calc(var(--sw-u) * 2.4); font-weight: 600; line-height: 1; margin: 0; color: #fff; }
-        .sw-brand small { display: block; font-size: calc(var(--sw-u) * .95); color: #f3f3e8; margin-top: calc(var(--sw-u) * .25); white-space: nowrap; }
+        .sw-brand small { display: block; line-height: normal; font-size: calc(var(--sw-u) * .95); color: #f3f3e8; margin-top: calc(var(--sw-u) * .25); white-space: nowrap; }
         .sw-nav { margin-top: calc(var(--sw-u) * 4.6); flex: none; }
         .sw-nav a {
             position: relative;
