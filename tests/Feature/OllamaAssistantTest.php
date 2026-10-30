@@ -160,23 +160,14 @@ class OllamaAssistantTest extends TestCase
         $this->assertStringNotContainsString('Private Account Name', $payload);
     }
 
-    public function test_ungrounded_financial_numbers_from_the_local_model_are_rejected(): void
+    public function test_answers_with_unverified_numbers_are_still_returned_in_full(): void
     {
         $this->fakeOllama('You spent ₱12,345 on food.');
-        Log::shouldReceive('warning')
-            ->once()
-            ->with('Ollama returned an invalid or ungrounded response.', [
-                'done' => true,
-                'done_reason' => 'stop',
-                'has_text' => true,
-                'too_long' => false,
-                'unsupported_financial_number' => true,
-            ]);
 
         $this->actingAs(User::factory()->create())
             ->postJson(route('reports.assistant'), ['question' => 'How much did I spend this month?'])
-            ->assertServiceUnavailable()
-            ->assertJsonPath('message', 'SpendWise AI could not respond right now. Please try again in a moment.');
+            ->assertOk()
+            ->assertJsonPath('answer', 'You spent ₱12,345 on food.');
     }
 
     public function test_history_is_sent_for_follow_ups_and_topic_switches_drop_financial_context(): void
@@ -455,7 +446,7 @@ class OllamaAssistantTest extends TestCase
         $this->assertSame(
             [
                 ['role' => 'user', 'content' => 'What is a PHP interface?'],
-                ['role' => 'assistant', 'content' => 'A PHP interface is a contract.'],
+                ['role' => 'assistant', 'content' => 'A PHP interface is a contract.', 'insight' => $events[3]['insight']],
             ],
             session('spendwise_ai_history_'.$user->id)
         );
@@ -473,14 +464,13 @@ class OllamaAssistantTest extends TestCase
         $this->assertSame('Visible answer.', end($events)['answer']);
     }
 
-    public function test_streaming_rejects_ungrounded_financial_numbers_after_the_stream_ends(): void
+    public function test_streaming_keeps_unverified_numbers_and_returns_the_full_answer(): void
     {
         $this->travelTo(Carbon::parse('2026-10-28 12:00:00'));
         $this->fakeOllamaStream(['You spent ₱', '77,777.00 on food.']);
         $user = User::factory()->create();
         $food = $user->categories()->create(['name' => 'Food', 'type' => 'expense']);
         $user->transactions()->create(['category_id' => $food->id, 'amount' => 80, 'type' => 'expense', 'date' => '2026-10-12']);
-        Log::shouldReceive('warning')->once();
 
         $events = $this->streamEvents(
             $this->actingAs($user)->post(route('reports.assistant.stream'), [
@@ -490,8 +480,10 @@ class OllamaAssistantTest extends TestCase
             ])
         );
 
-        $this->assertSame('error', end($events)['type']);
-        $this->assertNull(session('spendwise_ai_history_'.$user->id));
+        $this->assertSame('done', end($events)['type']);
+        $this->assertSame('You spent ₱77,777.00 on food.', end($events)['answer']);
+        $this->assertSame(['progress', 'doughnut'], array_column(end($events)['visuals'], 'type'));
+        $this->assertSame(['Food'], end($events)['visuals'][1]['labels']);
     }
 
     public function test_streaming_reports_a_friendly_error_when_ollama_is_down(): void

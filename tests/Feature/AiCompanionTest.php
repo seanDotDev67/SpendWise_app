@@ -70,6 +70,7 @@ class AiCompanionTest extends TestCase
             'dashboard' => 'dashboard',
             'transactions.page' => 'transactions',
             'categories.index' => 'categories',
+            'budgets.index' => 'budgets',
             'reports.index' => 'reports',
             'profile.edit' => 'profile',
         ];
@@ -137,7 +138,7 @@ class AiCompanionTest extends TestCase
         $this->assertSame('llama3.2:3b', $payload['model']);
         $this->assertStringContainsString('currently on the Transactions page', $payload['messages'][0]['content']);
         $this->assertStringContainsString('"Add transaction" button', $payload['messages'][0]['content']);
-        $this->assertStringContainsString('Budgets appears in the sidebar but is not available yet', $payload['messages'][0]['content']);
+        $this->assertStringContainsString('Budgets lets the user set monthly limits for expense categories', $payload['messages'][0]['content']);
         $this->assertStringContainsString('Never say an action has been completed', $payload['messages'][0]['content']);
         $encoded = json_encode($payload);
         $this->assertStringNotContainsString('Verified financial context', $encoded);
