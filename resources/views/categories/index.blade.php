@@ -20,6 +20,8 @@
     $uname = auth()->check() ? auth()->user()->name : 'Sean Andrei Lapaz';
     $uemail = auth()->check() ? auth()->user()->email : 'sean.lapaz@example.com';
     $initials = collect(preg_split('/\s+/', trim($uname)))->filter()->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('');
+    $profilePhotoPath = auth()->user()?->profile_photo_path;
+    $profilePhotoUrl = $profilePhotoPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($profilePhotoPath) : null;
 
     $transactionsUrl = Route::has('transactions.page') ? route('transactions.page') : $r('transactions.index');
     $profileUrl = $r('profile.edit');
@@ -654,9 +656,10 @@
             * { animation: none !important; transition: none !important; }
         }
     </style>
+    @include('layouts.partials.theme-styles')
 </head>
 
-<body>
+<body data-theme="{{ auth()->user()?->theme ?? 'system' }}" data-reduced-motion="{{ auth()->user()?->reduced_motion ? 'true' : 'false' }}">
 
     <div class="app">
 
@@ -696,7 +699,7 @@
                 <div class="user">
                     <i class="bi bi-bell bell" aria-hidden="true"></i>
                     <a href="{{ $profileUrl }}" class="user-link" title="Go to profile">
-                        <div class="avatar">{{ $initials }}</div>
+                        <div class="avatar">@if ($profilePhotoUrl)<img src="{{ $profilePhotoUrl }}" alt="">@else{{ $initials }}@endif</div>
                         <div class="uname"><b>{{ $uname }}</b><span>{{ $uemail }}</span></div>
                         <i class="bi bi-chevron-down chev" aria-hidden="true"></i>
                     </a>
