@@ -20,7 +20,13 @@
             <i class="bi bi-bell fs-4" aria-hidden="true"></i>
         </button>
         <a href="{{ route('profile.edit') }}" class="sw-profile-link d-flex align-items-center gap-3" aria-label="Open profile settings">
-            <div class="sw-avatar">{{ $initials }}</div>
+            <div class="sw-avatar">
+                @if ($user->profile_photo_path)
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($user->profile_photo_path) }}" alt="">
+                @else
+                    {{ $initials }}
+                @endif
+            </div>
             <div class="d-none d-sm-block lh-sm">
                 <div class="fw-medium">{{ $user->name }}</div>
                 <small class="text-muted">{{ $user->email }}</small>

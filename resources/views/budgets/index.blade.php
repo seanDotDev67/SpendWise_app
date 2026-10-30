@@ -40,6 +40,8 @@
     $uname = auth()->check() ? auth()->user()->name : 'Sean Andrei Lapaz';
     $uemail = auth()->check() ? auth()->user()->email : 'sean.lapaz@example.com';
     $initials = collect(preg_split('/\s+/', trim($uname)))->filter()->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('');
+    $profilePhotoPath = auth()->user()?->profile_photo_path;
+    $profilePhotoUrl = $profilePhotoPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($profilePhotoPath) : null;
 
     $transactionsUrl = Route::has('transactions.page') ? route('transactions.page') : $r('transactions.index');
     $profileUrl = $r('profile.edit');
@@ -697,9 +699,10 @@
             * { animation: none !important; transition: none !important; }
         }
     </style>
+    @include('layouts.partials.theme-styles')
 </head>
 
-<body>
+<body data-theme="{{ auth()->user()?->theme ?? 'system' }}" data-reduced-motion="{{ auth()->user()?->reduced_motion ? 'true' : 'false' }}">
 
     <div class="app">
 
@@ -739,7 +742,7 @@
                 <div class="user">
                     <i class="bi bi-bell bell" aria-hidden="true"></i>
                     <a href="{{ $profileUrl }}" class="user-link" title="Go to profile">
-                        <div class="avatar">{{ $initials }}</div>
+                        <div class="avatar">@if ($profilePhotoUrl)<img src="{{ $profilePhotoUrl }}" alt="">@else{{ $initials }}@endif</div>
                         <div class="uname"><b>{{ $uname }}</b><span>{{ $uemail }}</span></div>
                         <i class="bi bi-chevron-down chev" aria-hidden="true"></i>
                     </a>
@@ -783,7 +786,7 @@
                     <div class="hero-mid">
                         <div class="gauge">
                             <svg viewBox="0 0 160 96" aria-hidden="true">
-                                <path d="M10 84 A70 70 0 0 1 150 84" fill="none" stroke="#e3e1d6" stroke-width="14"
+                                <path class="gauge-track" d="M10 84 A70 70 0 0 1 150 84" fill="none" stroke="#e3e1d6" stroke-width="14"
                                     stroke-linecap="round"></path>
                                 <path id="arc" class="arc" d="M10 84 A70 70 0 0 1 150 84" pathLength="100"
                                     style="stroke-dasharray:0 100;stroke:#3b4a3c"></path>
@@ -791,7 +794,7 @@
                                     stroke-linecap="round"></line>
                                 <text id="gp" x="80" y="72" text-anchor="middle" font-size="26" font-weight="600"
                                     fill="#3b4a3c">0%</text>
-                                <text x="80" y="90" text-anchor="middle" font-size="11" fill="#7d7d6c">of budget
+                                <text class="gauge-note" x="80" y="90" text-anchor="middle" font-size="11" fill="#7d7d6c">of budget
                                     used</text>
                             </svg>
                         </div>
@@ -864,6 +867,9 @@
                 taupe: { c: '#c9c5b6', t: '#e5e3d8', i: '#7d7a6c' },
                 gold: { c: '#dcc875', t: '#f4ebc3', i: '#a8861f' }
             };
+            const categoryHue = color => PAL[color] || (/^#[0-9a-f]{6}$/i.test(String(color))
+                ? { c: color, t: color, i: '#3b4a3c' }
+                : PAL.forest);
 
             const $ = id => document.getElementById(id);
             const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -895,13 +901,13 @@
             function updateHero() {
                 const t = totals(), m = M(), p = pacePct(), arc = $('arc');
                 arc.style.strokeDasharray = Math.min(t.pct, 100) + ' 100';
-                arc.style.stroke = t.pct > 100 ? '#c98a94' : t.pct >= 75 ? '#d9bf5a' : '#3b4a3c';
+                arc.style.stroke = t.pct > 100 ? '#c98a94' : t.pct >= 75 ? '#d9bf5a' : 'var(--arc-ok, #3b4a3c)';
                 $('gp').textContent = Math.round(t.pct) + '%';
                 $('hBud').textContent = money(t.L);
                 $('hSpent').textContent = money(t.S);
                 $('hLeftL').textContent = t.left >= 0 ? 'Left to spend' : 'Over budget by';
                 $('hLeft').textContent = money(Math.abs(t.left));
-                $('hLeft').style.color = t.left >= 0 ? '#3b4a3c' : '#a8454f';
+                $('hLeft').style.color = t.left >= 0 ? 'var(--arc-ok, #3b4a3c)' : 'var(--arc-over, #a8454f)';
 
                 const tick = $('tick');
                 if (p === null) { tick.style.display = 'none'; }
@@ -926,9 +932,9 @@
 
             // ===== jars =====
             function cardHTML(e, i) {
-                const p = PAL[e.color] || PAL.forest, on = draft && !draft.isNew && draft.id === e.id;
+                const p = categoryHue(e.color), on = draft && !draft.isNew && draft.id === e.id;
                 return '<div class="env' + (on ? ' on' : '') + '" data-id="' + e.id + '" role="button" tabindex="0" style="--i:' + i + '">'
-                    + '<div class="env-h"><div class="ic" style="background:' + p.t + ';color:' + p.i + '"><i class="ti ti-' + e.icon + '" aria-hidden="true"></i></div><div class="en">' + esc(e.name) + '</div></div>'
+                    + '<div class="env-h"><div class="ic" style="background:' + p.t + ';color:' + p.i + '"><i class="ti ti-' + esc(e.icon) + '" aria-hidden="true"></i></div><div class="en">' + esc(e.name) + '</div></div>'
                     + '<div class="jar"><div class="jin"><div class="fill" style="background:' + p.c + '"></div></div><div class="pace"></div><div class="lvl" style="bottom:6%"></div></div>'
                     + '<div class="amt"></div>'
                     + '<div class="env-f"><span class="chip"></span><span class="lft"></span></div></div>';
@@ -993,7 +999,7 @@
                         + '<div class="two"><div><label class="lab" for="nc">Category</label><select id="nc" class="fin">' + free.map(e => '<option value="' + e.id + '"' + (e.id === draft.id ? ' selected' : '') + '>' + esc(e.name) + '</option>').join('') + '</select></div>'
                         + '<div><label class="lab" for="num">Monthly limit (₱)</label><input id="num" class="fin" type="number" min="100" step="100" value="' + draft.limit + '"></div></div>';
                 } else {
-                    const e = env.find(x => x.id === draft.id), p = PAL[e.color] || PAL.forest, max = Math.max(10000, Math.ceil(draft.limit / 1000) * 1000);
+                    const e = env.find(x => x.id === draft.id), p = categoryHue(e.color), max = Math.max(10000, Math.ceil(draft.limit / 1000) * 1000);
                     h = '<div class="ep-h"><div class="ic" style="background:' + p.t + ';color:' + p.i + '"><i class="ti ti-' + e.icon + '" aria-hidden="true"></i></div><span class="t">Adjust ' + esc(e.name) + ' budget</span><button type="button" class="ib" data-a="cancel" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button></div>'
                         + '<div class="slide"><input id="rng" type="range" min="0" max="' + max + '" step="100" value="' + draft.limit + '" aria-label="Monthly limit"><input id="num" class="fin" type="number" min="100" step="100" value="' + draft.limit + '"></div>'
                         + '<div class="quick"><button type="button" class="qk" data-q="-500">− ₱500</button><button type="button" class="qk" data-q="500">+ ₱500</button><button type="button" class="qk" data-q="match">Match spending</button></div>';
