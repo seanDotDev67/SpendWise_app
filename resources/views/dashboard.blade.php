@@ -4,12 +4,25 @@
 
 @push('styles')
 <style>
+        @property --sw-donut-progress {
+            syntax: '<percentage>';
+            inherits: false;
+            initial-value: 0%;
+        }
+
         .sw-transaction-description { min-width: 0; }
 
         /* Donut */
         .sw-donut { position: relative; width: 140px; height: 140px; border-radius: 50%; flex-shrink: 0; }
+        .sw-donut::before {
+            position: absolute; z-index: 0; inset: 0; border-radius: inherit; content: "";
+            background: var(--sw-donut-gradient);
+            -webkit-mask: conic-gradient(#000 0 var(--sw-donut-progress), transparent var(--sw-donut-progress) 100%);
+            mask: conic-gradient(#000 0 var(--sw-donut-progress), transparent var(--sw-donut-progress) 100%);
+            animation: sw-donut-sweep .9s .12s cubic-bezier(.2, .7, .25, 1) both;
+        }
         .sw-donut-hole {
-            position: absolute; inset: 26px; border-radius: 50%; background: var(--sw-card);
+            position: absolute; z-index: 1; inset: 26px; border-radius: 50%; background: var(--sw-card);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: inset 0 1px 4px rgba(0, 0, 0, .1);
         }
@@ -36,6 +49,23 @@
         .sw-right { border-left: 2px solid #DDD5BF; }
         @media (max-width: 1199.98px) { .sw-right { border-left: 0; } }
         .badge-insight { background: #B8F0C0; color: #1f6b33; font-size: 8px; font-weight: 400; }
+    .sw-habit { background: #fff; border: 1px solid #DDD5BF; }
+    .sw-habit-warning { border-left: 4px solid #D98E96; }
+    .sw-habit-positive { border-left: 4px solid #7F9468; }
+    .sw-habit-neutral { border-left: 4px solid #B8A98A; }
+    .sw-habit-bars { display: flex; align-items: flex-end; gap: 6px; height: 64px; }
+    .sw-habit-bar-col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; font-size: 9px; color: #6b6b6b; }
+    .sw-habit-bar { width: 100%; background: #D9D2BC; border-radius: 4px 4px 0 0; }
+    .sw-habit-bar.on { background: #2F4A3A; }
+    .sw-habit-track { height: 8px; background: #EFE9D6; border-radius: 4px; overflow: hidden; }
+    .sw-habit-fill { height: 100%; background: #B8A98A; border-radius: 4px; }
+    .sw-habit-fill.on { background: #2F4A3A; }
+    .sw-habit-dot { width: 10px; height: 10px; border-radius: 50%; background: #E3DCC6; }
+    .sw-habit-dot.on { background: #2F4A3A; }
+        .sw-coach { border: 1px solid rgba(47, 74, 58, .12); }
+        .sw-coach-title { color: var(--sw-dark); }
+        .sw-coach-message { font-size: 12px; line-height: 1.65; }
+        .sw-coach-focus { border-left: 3px solid var(--sw-sidebar); background: rgba(255, 255, 255, .55); }
 
         .sw-page-title { font-size: clamp(1.75rem, 3vw, 2.5rem); }
         .sw-stat-value { font-size: clamp(1.05rem, 1.6vw, 1.45rem); letter-spacing: -.035em; overflow-wrap: anywhere; }
@@ -55,7 +85,6 @@
         .sw-entrance:nth-child(3) { animation-delay: .14s; }
         .sw-entrance:nth-child(4) { animation-delay: .21s; }
         .sw-entrance:nth-child(5) { animation-delay: .28s; }
-        .sw-donut { animation: sw-chart-in .8s .12s ease-out both; }
         .sw-stat:hover, .sw-card:hover { box-shadow: 0 10px 26px rgba(47, 74, 58, .1); }
         .btn-sw-dark:focus-visible, .btn-sw-light:focus-visible {
             outline: 3px solid rgba(47, 74, 58, .45);
@@ -68,7 +97,7 @@
         .sw-transaction-row + .sw-transaction-row { border-top: 1px solid rgba(47, 74, 58, .1); }
         @keyframes sw-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes sw-progress-in { to { transform: scaleX(var(--sw-progress, 1)); } }
-        @keyframes sw-chart-in { from { opacity: 0; transform: scale(.88) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+        @keyframes sw-donut-sweep { to { --sw-donut-progress: 100%; } }
         @keyframes sw-cashflow-in { to { transform: scaleX(1); } }
 
         @media (max-width: 991.98px) {
@@ -160,7 +189,7 @@
                                     <small class="text-muted" style="font-size:10px">This Month · {{ $now->format('F Y') }}</small>
 
                                     <div class="sw-spending-breakdown d-flex align-items-center gap-4 mt-3">
-                                        <div class="sw-donut" style="background: {{ $donut }}">
+                                        <div class="sw-donut" style="--sw-donut-gradient: {{ $donut }}">
                                             <div class="sw-donut-hole">
                                                 <span class="fs-6 fw-semibold">₱{{ number_format($totalSpent, 2) }}</span>
                                                 <span style="font-size:9px">This month</span>
@@ -241,21 +270,69 @@
                                 </div>
                             </div>
                             <div class="col-lg-7">
-                                <div class="sw-card-beige p-3 sw-entrance">
-                                    <div class="d-flex align-items-start gap-3">
-                                        <i class="bi bi-stars fs-3"></i>
+                                <div class="sw-card-beige sw-coach p-3 h-100 sw-entrance">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="sw-stat-icon" style="background:var(--sw-dark)"><i class="bi bi-stars"></i></span>
                                         <div class="flex-grow-1 lh-sm">
-                                            <div class="fs-5">SpendWise AI</div>
-                                            <small class="text-muted" style="font-size:9px">Your personal financial companion</small>
+                                            <h3 class="serif fs-5 mb-0">SpendWise AI Coach</h3>
+                                            <small class="text-muted" style="font-size:9px">A thoughtful look at this month so far</small>
                                         </div>
                                         <span class="badge badge-insight">Based on your data</span>
                                     </div>
                                     <hr style="border-color:#DDD5BF">
-                                    <p class="small mb-0">
-                                        This month, you've recorded ₱{{ number_format($income, 2) }} in income and
-                                        ₱{{ number_format($expenses, 2) }} in expenses. Your net cash flow is
-                                        ₱{{ number_format($monthlyNet, 2) }}.
-                                    </p>
+                                    <h4 class="sw-coach-title serif fw-bold fs-5 mb-2">{{ $coachInsight['title'] }}</h4>
+                                    <p class="sw-coach-message mb-3">{{ $coachInsight['message'] }}</p>
+                                    @if (! empty($habits['lead']))
+                                        @php $lead = $habits['lead']; @endphp
+                                        <div class="sw-habit sw-habit-{{ $lead['tone'] }} rounded-2 px-3 py-2 mb-2" data-habit="{{ $lead['type'] }}">
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <span class="badge badge-insight">Your pattern</span>
+                                                <strong class="small">{{ $lead['title'] }}</strong>
+                                            </div>
+                                            <p class="mb-2" style="font-size:11px">{{ $lead['message'] }}</p>
+                                            @if ($lead['chart']['kind'] === 'bars')
+                                                <div class="sw-habit-bars" role="img" aria-label="Spending by weekday">
+                                                    @foreach ($lead['chart']['rows'] as $row)
+                                                        <div class="sw-habit-bar-col" title="{{ $row['label'] }}: ₱{{ number_format($row['value'], 2) }}">
+                                                            <div class="sw-habit-bar {{ $row['highlight'] ? 'on' : '' }}" style="height: {{ max(4, $row['percent']) }}%"></div>
+                                                            <span>{{ $row['label'] }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @elseif ($lead['chart']['kind'] === 'compare')
+                                                @php $peak = max(array_column($lead['chart']['rows'], 'value')) ?: 1; @endphp
+                                                @foreach ($lead['chart']['rows'] as $row)
+                                                    <div class="d-flex align-items-center gap-2 mb-1" style="font-size:10px">
+                                                        <span style="width:62px">{{ $row['label'] }}</span>
+                                                        <div class="flex-grow-1 sw-habit-track"><div class="sw-habit-fill {{ $loop->last ? 'on' : '' }}" style="width: {{ round($row['value'] / $peak * 100) }}%"></div></div>
+                                                        <strong>₱{{ number_format($row['value'], 2) }}</strong>
+                                                    </div>
+                                                @endforeach
+                                            @elseif ($lead['chart']['kind'] === 'dots')
+                                                <div class="d-flex gap-1" role="img" aria-label="{{ $lead['chart']['filled'] }} of {{ $lead['chart']['total'] }} days recorded">
+                                                    @for ($i = 0; $i < $lead['chart']['total']; $i++)
+                                                        <span class="sw-habit-dot {{ $i < $lead['chart']['filled'] ? 'on' : '' }}"></span>
+                                                    @endfor
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @foreach (collect($habits['signals'])->skip(1)->take(2) as $other)
+                                            <div class="small text-muted mb-1" style="font-size:10px">• {{ $other['title'] }}: {{ $other['message'] }}</div>
+                                        @endforeach
+                                    @endif
+                                    @if ($coachInsight['category'])
+                                        <div class="sw-coach-focus rounded-2 px-3 py-2 mb-2">
+                                            <div class="text-muted" style="font-size:9px">Largest recorded expense category</div>
+                                            <div class="d-flex justify-content-between align-items-center gap-2">
+                                                <strong class="small">{{ $coachInsight['category']['name'] }}</strong>
+                                                <strong class="small text-nowrap">₱{{ number_format($coachInsight['category']['spent'], 2) }}</strong>
+                                            </div>
+                                            <small class="text-muted" style="font-size:9px">{{ $coachInsight['category']['percentage'] }}% of recorded expenses this month</small>
+                                        </div>
+                                    @endif
+                                    <small class="text-muted d-block" style="font-size:9px">
+                                        Guidance uses recorded transactions only. Keep essentials covered and choose what feels manageable.
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -292,10 +369,10 @@
                         <div class="sw-card mb-3 sw-entrance">
                             <h3 class="serif fw-semibold fs-5">Quick Actions</h3>
                             <div class="d-grid gap-2 mt-2">
-                                <a href="{{ Route::has('transactions.create') ? route('transactions.create') : '#' }}"
-                                   class="btn btn-sw-dark d-flex align-items-center justify-content-center gap-2">
+                                <button type="button" data-bs-toggle="modal" data-bs-target="#addTransactionModal"
+                                        class="btn btn-sw-dark d-flex align-items-center justify-content-center gap-2">
                                     <i class="bi bi-plus-lg"></i> Add Transaction
-                                </a>
+                                </button>
                                 <a href="{{ Route::has('budgets.index') ? route('budgets.index') : '#' }}"
                                    class="btn btn-sw-light d-flex align-items-center gap-3 text-start">
                                     <i class="bi bi-bullseye fs-5"></i> Set Budget
@@ -333,4 +410,6 @@
                         </div>
                     </aside>
 </div>
+
+@include('transactions.partials.add-modal', ['returnToDashboard' => true])
 @endsection
