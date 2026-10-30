@@ -392,15 +392,86 @@ Never post database passwords, `APP_KEY`, AI provider API keys, or other secrets
 
 ### SpendWise AI with a local Ollama model (default)
 
-SpendWise AI runs on a local open-weight model through [Ollama](https://ollama.com). No Gemini key is needed. Totals and trends are calculated in PHP/SQL; the model only explains them.
+SpendWise AI runs on a local open-weight model through [Ollama](https://ollama.com). No Gemini key is needed. Totals and trends are calculated in PHP/SQL; the model only explains them. Each teammate installs Ollama and downloads the model once on their own computer. The model is not stored in Git.
+
+**Requirements:** about 4 GB of free disk space, 8 GB RAM recommended, and an internet connection for the one-time download. A GPU is optional; on CPU only, replies take several seconds to a minute.
+
+#### Step 1. Install Ollama
 
 ```powershell
-winget install Ollama.Ollama      # or use the installer from ollama.com
+winget install Ollama.Ollama
+```
+
+Or download the Windows installer from [ollama.com/download](https://ollama.com/download). Then **close and reopen PowerShell** so the `ollama` command is found.
+
+```powershell
+ollama --version
+```
+
+#### Step 2. Make sure Ollama is running
+
+The installer normally starts Ollama in the background (tray icon). Check it:
+
+```powershell
+curl.exe http://localhost:11434
+```
+
+Expected: `Ollama is running`. If not, start it with `ollama serve` in a separate PowerShell window and leave it open.
+
+#### Step 3. Pull (download) the model
+
+```powershell
 ollama pull llama3.2:3b
-ollama list                       # the model must appear here
+```
+
+This downloads about 2 GB once. For a faster but less capable model on weak computers, use `ollama pull llama3.2:1b` and set `OLLAMA_MODEL=llama3.2:1b` in `.env`.
+
+#### Step 4. Verify the model is installed
+
+```powershell
+ollama list
 curl.exe http://localhost:11434/api/tags
+```
+
+`llama3.2:3b` must appear in both outputs. Optional quick test: `ollama run llama3.2:3b "Say hello"` (type `/bye` to exit).
+
+#### Step 5. Configure SpendWise
+
+The defaults already point to Ollama, so `.env` needs no change. To set them explicitly, add:
+
+```env
+ASSISTANT_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2:3b
+OLLAMA_TIMEOUT=120
+OLLAMA_KEEP_ALIVE=30m
+```
+
+Then clear the cached configuration:
+
+```powershell
 php artisan config:clear
 ```
+
+`OLLAMA_KEEP_ALIVE=30m` keeps the model in memory so only the first question is slow.
+
+#### Step 6. Start SpendWise and try it
+
+```powershell
+php artisan serve
+```
+
+Log in, open **Reports** or click the floating AI button, and ask "What is a PHP interface?" (general) and "How much did I spend this month?" (uses your data). The first reply can take up to a minute while the model loads.
+
+#### If something goes wrong
+
+| Message or symptom | Fix |
+|---|---|
+| `ollama` is not recognized | Reopen PowerShell after installing. |
+| "local model is not running" | Start Ollama (`ollama serve`) and re-run Step 2. |
+| "model is not installed" | Run `ollama pull llama3.2:3b`, then `ollama list`. |
+| Timeout or very slow | Use `llama3.2:1b`, close heavy apps, keep `OLLAMA_KEEP_ALIVE`. |
+| `.env` change ignored | Run `php artisan config:clear`. |
 
 Optional `.env` values (defaults shown in `.env.example`): `ASSISTANT_PROVIDER=ollama`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT`.
 
