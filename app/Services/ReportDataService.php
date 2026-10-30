@@ -148,6 +148,7 @@ class ReportDataService
         $maximum = (float) $values->max();
         $spread = max(1, $maximum - $minimum);
         $lastIndex = max(1, $monthly->count() - 1);
+        $singleMonth = $monthly->count() === 1;
 
         $points = [];
         foreach (['income', 'expenses', 'net'] as $metric) {
@@ -155,12 +156,15 @@ class ReportDataService
                 $metric,
                 $minimum,
                 $spread,
-                $lastIndex
+                $lastIndex,
+                $singleMonth
             ): string {
                 $x = ($index / $lastIndex) * 100;
                 $y = 90 - (($month[$metric] - $minimum) / $spread) * 80;
+                $point = round($x, 2).','.round($y, 2);
 
-                return round($x, 2).','.round($y, 2);
+                // A single month would be one point, which draws no line; extend it across the chart.
+                return $singleMonth ? $point.' 100,'.round($y, 2) : $point;
             })->implode(' ');
         }
 

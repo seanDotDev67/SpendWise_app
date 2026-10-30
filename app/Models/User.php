@@ -25,6 +25,8 @@ class User extends Authenticatable
         'email_verified_at',
         'password',
         'google_id',
+        'theme',
+        'reduced_motion',
     ];
 
     /**
@@ -47,6 +49,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'reduced_motion' => 'boolean',
         ];
     }
     public function categories(): HasMany
@@ -57,6 +60,11 @@ class User extends Authenticatable
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
     }
 
     public function transations(): HasMany

@@ -250,7 +250,26 @@
     }
     .report-trend-svg { display: block; width: 100%; height: 155px; margin-top: 7px; overflow: visible; }
     .report-grid-line { stroke: rgba(47, 74, 58, .12); stroke-width: .6; }
-    .report-trend-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .report-trend-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .report-legend-row { display: flex; gap: 10px; font-size: 9px; }
+    .report-cf-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+    .report-cf-summary div { background: rgba(47, 74, 58, .05); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .report-cf-summary span { font-size: 8px; color: var(--report-muted); text-transform: uppercase; letter-spacing: .04em; }
+    .report-cf-summary strong { font-size: 10px; overflow-wrap: anywhere; }
+    .report-cf-summary .pos, .report-cf-val.pos, .report-cf-label .pos { color: #24835e; }
+    .report-cf-summary .neg, .report-cf-val.neg, .report-cf-label .neg { color: #e47782; }
+    .report-cf { display: flex; gap: 10px; height: 180px; margin-top: 12px; padding: 0 4px; position: relative; }
+    .report-cf-col { flex: 1 1 0; min-width: 0; max-width: 90px; margin: 0 auto; display: flex; flex-direction: column; }
+    .report-cf-top, .report-cf-bottom { display: flex; flex-direction: column; align-items: center; }
+    .report-cf-top { justify-content: flex-end; border-bottom: 1px dashed rgba(47, 74, 58, .35); }
+    .report-cf-bottom { justify-content: flex-start; }
+    .report-cf-bar { display: block; width: 62%; min-height: 3px; transition: height .3s; }
+    .report-cf-bar.pos { background: linear-gradient(180deg, #3fae83, #24835e); border-radius: 6px 6px 0 0; }
+    .report-cf-bar.neg { background: linear-gradient(180deg, #e47782, #f0a1a8); border-radius: 0 0 6px 6px; }
+    .report-cf-val { font-size: 9px; font-weight: 700; padding: 2px 0; white-space: nowrap; }
+    .report-cf-labels { display: flex; gap: 10px; margin-top: 6px; padding: 0 4px; }
+    .report-cf-label { flex: 1 1 0; min-width: 0; max-width: 90px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; font-size: 8px; color: var(--report-muted); }
+    .report-cf-label strong { font-size: 9px; color: inherit; }
     .report-trend-line.income { stroke: #24835e; }
     .report-trend-line.expenses { stroke: #e47782; }
     .report-trend-line.net { stroke: #6885c8; }
@@ -269,6 +288,12 @@
     .report-top-fill { height: 100%; border-radius: inherit; }
     .report-recent { margin-top: 12px; }
     .report-recent-heading { margin-bottom: 8px; }
+    .report-goal-figures { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin-top: 14px; }
+    .report-goal-figures strong { font-size: 22px; }
+    .report-goal-figures span { color: var(--report-muted); font-size: 11px; }
+    .report-goal-track { height: 10px; margin-top: 10px; }
+    .report-goal-note { margin: 12px 0 0; color: var(--report-muted); font-size: 11px; line-height: 1.5; }
+    .report-goal-item + .report-goal-item { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--report-border); }
     .report-recent-link { color: var(--report-ink); font-size: 10px; text-decoration: none; }
     .report-recent-link:hover { text-decoration: underline; }
     .report-table-wrap { overflow-x: auto; }
@@ -324,6 +349,7 @@
     .report-ai-welcome strong { display: block; margin-bottom: 3px; }
     .report-ai-section-label { margin: 12px 0 6px; font-size: 9px; font-weight: 700; }
     .report-ai-suggestions { display: grid; gap: 5px; }
+    .report-ai-suggestions[hidden] { display: none; }
     .report-ai-suggestion {
         padding: 7px 9px;
         border: 1px solid var(--report-border);
@@ -511,27 +537,65 @@
                             <h2 id="monthly-trend-title">Monthly Cash Flow</h2>
                             <p class="report-card-subtitle">Income, expenses, and net cash flow</p>
                         </div>
-                        <div class="report-line-legend">
-                            <span class="report-legend-item"><i class="report-legend-dot income-color"></i> Income</span>
-                            <span class="report-legend-item"><i class="report-legend-dot expense-color"></i> Expenses</span>
-                            <span class="report-legend-item"><i class="report-legend-dot net-color"></i> Net</span>
+                        <div class="report-legend-row">
+                            <span class="report-legend-item"><i class="report-legend-dot income-color"></i> Surplus</span>
+                            <span class="report-legend-item"><i class="report-legend-dot expense-color"></i> Deficit</span>
                         </div>
                     </div>
                     @if ($report['transactionCount'] === 0)
                         <div class="report-chart-empty">No monthly trend is available until transactions are recorded.</div>
                     @else
-                        <svg class="report-trend-svg" viewBox="0 0 100 100" preserveAspectRatio="none"
-                             role="img" aria-label="Monthly income, expenses, and net cash flow trend">
-                            <line class="report-grid-line" x1="0" y1="10" x2="100" y2="10"></line>
-                            <line class="report-grid-line" x1="0" y1="50" x2="100" y2="50"></line>
-                            <line class="report-grid-line" x1="0" y1="90" x2="100" y2="90"></line>
-                            <polyline class="report-trend-line income" points="{{ $report['chartPoints']['income'] }}"></polyline>
-                            <polyline class="report-trend-line expenses" points="{{ $report['chartPoints']['expenses'] }}"></polyline>
-                            <polyline class="report-trend-line net" points="{{ $report['chartPoints']['net'] }}"></polyline>
-                        </svg>
-                        <div class="report-trend-dates">
-                            @foreach ($report['monthly'] as $month)
-                                <span>{{ $month['label'] }}</span>
+                        @php
+                            $months = $report['monthly']->values();
+                            $maxPos = max(0, (float) $months->max('net'));
+                            $maxNeg = abs(min(0, (float) $months->min('net')));
+                            $posShare = ($maxPos + $maxNeg) > 0 ? $maxPos / ($maxPos + $maxNeg) : 1;
+                            $posShare = $maxNeg == 0 ? 1 : ($maxPos == 0 ? 0 : max(0.2, min(0.8, $posShare)));
+                            $totalNet = (float) $months->sum('net');
+                            $best = $months->sortByDesc('net')->first();
+                            $avg = $months->count() ? $totalNet / $months->count() : 0;
+                            $short = function (float $v): string {
+                                $a = abs($v);
+                                $s = $a >= 1000000 ? number_format($a / 1000000, 1) . 'M' : ($a >= 1000 ? number_format($a / 1000, 1) . 'k' : number_format($a, 0));
+                                return ($v < 0 ? '-' : '') . '₱' . $s;
+                            };
+                        @endphp
+                        <div class="report-cf-summary">
+                            <div><span>Total net</span><strong class="{{ $totalNet < 0 ? 'neg' : 'pos' }}">{{ $totalNet < 0 ? '-' : '+' }}₱{{ number_format(abs($totalNet), 2) }}</strong></div>
+                            <div><span>Avg / month</span><strong class="{{ $avg < 0 ? 'neg' : 'pos' }}">{{ $avg < 0 ? '-' : '+' }}₱{{ number_format(abs($avg), 2) }}</strong></div>
+                            <div><span>Best month</span><strong>{{ $best['label'] }}</strong></div>
+                        </div>
+                        <div class="report-cf" role="img" aria-label="Monthly net cash flow columns">
+                            @foreach ($months as $m)
+                                @php
+                                    $up = $m['net'] >= 0;
+                                    $h = $up
+                                        ? ($maxPos > 0 ? max(3, round($m['net'] / $maxPos * 100)) : 0)
+                                        : ($maxNeg > 0 ? max(3, round(abs($m['net']) / $maxNeg * 100)) : 0);
+                                @endphp
+                                <div class="report-cf-col" title="{{ $m['label'] }}: income ₱{{ number_format($m['income'], 2) }}, expenses ₱{{ number_format($m['expenses'], 2) }}, net ₱{{ number_format($m['net'], 2) }}">
+                                    <div class="report-cf-top" style="height: {{ round($posShare * 100, 2) }}%">
+                                        @if ($up)
+                                            <span class="report-cf-val pos">{{ $short((float) $m['net']) }}</span>
+                                            <i class="report-cf-bar pos" style="height: {{ $h }}%"></i>
+                                        @endif
+                                    </div>
+                                    <div class="report-cf-bottom" style="height: {{ round((1 - $posShare) * 100, 2) }}%">
+                                        @unless ($up)
+                                            <i class="report-cf-bar neg" style="height: {{ $h }}%"></i>
+                                            <span class="report-cf-val neg">{{ $short((float) $m['net']) }}</span>
+                                        @endunless
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="report-cf-labels">
+                            @foreach ($months as $m)
+                                <div class="report-cf-label">
+                                    <strong>{{ $m['label'] }}</strong>
+                                    <span class="pos">▲ {{ $short((float) $m['income']) }}</span>
+                                    <span class="neg">▼ {{ $short((float) $m['expenses']) }}</span>
+                                </div>
                             @endforeach
                         </div>
                     @endif
@@ -593,6 +657,49 @@
                     @endif
                 </section>
 
+                <section class="report-card report-recent report-goal" aria-labelledby="savings-goals-title">
+                    <div class="report-card-heading">
+                        <div>
+                            <h2 id="savings-goals-title">Savings Goals</h2>
+                            <p class="report-card-subtitle">Progress from the goals you set in Budgets</p>
+                        </div>
+                        <span class="report-stat-icon"><i class="bi bi-bullseye" aria-hidden="true"></i></span>
+                    </div>
+                    @forelse ($goals as $goal)
+                        @php
+                            $goalPercent = min(100, (int) round($goal->saved / $goal->target * 100));
+                            $goalRemaining = max(0, $goal->target - $goal->saved);
+                        @endphp
+                        <div class="report-goal-item">
+                            <div class="report-card-heading">
+                                <strong>{{ $goal->name }}</strong>
+                                <span>{{ $goalPercent }}%</span>
+                            </div>
+                            <div class="report-goal-figures">
+                                <strong>₱{{ number_format($goal->saved, 2) }}</strong>
+                                <span>of ₱{{ number_format($goal->target, 2) }}</span>
+                            </div>
+                            <div class="report-top-track report-goal-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $goalPercent }}" aria-label="{{ $goal->name }} savings goal progress">
+                                <div class="report-top-fill" style="width: {{ $goalPercent }}%; background: {{ $goalPercent >= 100 ? '#2F704F' : '#C49A54' }}"></div>
+                            </div>
+                            <p class="report-goal-note">
+                                @if ($goalPercent >= 100)
+                                    Goal reached — you’ve saved ₱{{ number_format($goal->saved, 2) }}.
+                                @else
+                                    ₱{{ number_format($goalRemaining, 2) }} left to reach this goal.
+                                    @if ($goal->deadline)
+                                        Deadline: {{ $goal->deadline->format('M j, Y') }}.
+                                    @endif
+                                @endif
+                            </p>
+                        </div>
+                    @empty
+                        <div class="report-chart-empty">
+                            No savings goals yet. <a class="report-recent-link" href="{{ route('budgets.index') }}">Create one in Budgets</a>.
+                        </div>
+                    @endforelse
+                </section>
+
                 <section class="report-card report-focus" aria-label="Report date range">
                     <div class="d-flex align-items-center gap-2">
                         <span class="report-stat-icon"><i class="bi bi-calendar3" aria-hidden="true"></i></span>
@@ -639,6 +746,10 @@
                     <div class="report-ai-suggestions">
                         @foreach ([
                             'Where does most of my money go?',
+                            'Show my expenses for the last six months.',
+                            'Compare my income and expenses.',
+                            'Show my daily spending trend.',
+                            'What happens if I reduce my shopping expenses by 15%?',
                             'How can I reduce my expenses?',
                             'Am I staying within my budgets?',
                             'Compare my spending this month and last month.',
@@ -652,7 +763,7 @@
                     <div class="report-chat-log" id="reportChatLog" role="log" aria-live="polite">
                         @forelse ($assistantHistory as $message)
                             @if (in_array($message['role'] ?? '', ['user', 'assistant'], true) && is_string($message['content'] ?? null))
-                                <div class="report-chat-bubble {{ $message['role'] }}">{{ $message['content'] }}</div>
+                                <div class="report-chat-bubble {{ $message['role'] }}" @if (is_array($message['insight'] ?? null)) data-insight="{{ json_encode($message['insight']) }}" @endif>{{ $message['content'] }}</div>
                             @endif
                         @empty
                             <div class="report-chat-bubble assistant">{{ $assistantGreeting }}, {{ $assistantFirstName }}! 👋 I’m here to help. Ask me anything, or ask about your finances for a thoughtful look at your recorded data.</div>
@@ -760,6 +871,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     log.querySelectorAll('.report-chat-bubble.assistant').forEach(function (bubble) {
         renderMarkdown(bubble, bubble.textContent);
+        if (bubble.dataset.insight && window.SpendWiseAI && window.SpendWiseAI.renderInsight) {
+            try { window.SpendWiseAI.renderInsight(bubble, JSON.parse(bubble.dataset.insight)); } catch (e) { /* skip unreadable saved visuals */ }
+        }
     });
 
     function addMessage(text, kind) {
@@ -842,6 +956,8 @@ document.addEventListener('DOMContentLoaded', function () {
             let buffer = '';
             let finished = false;
             let finalAnswer = '';
+            let finalVisuals = [];
+            let finalInsight = null;
 
             const handle = function (line) {
                 if (!line.trim()) return;
@@ -858,6 +974,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (event.type === 'done') {
                     finished = true;
                     finalAnswer = event.answer;
+                    finalVisuals = event.visuals || [];
+                    finalInsight = event.insight || null;
                 } else if (event.type === 'error') {
                     throw new Error(event.message);
                 }
@@ -881,7 +999,16 @@ document.addEventListener('DOMContentLoaded', function () {
             if (bubble && pending.length > 0) {
                 await new Promise(function (resolve) { drainResolve = resolve; startPump(); });
             }
-            if (bubble) renderMarkdown(bubble, finalAnswer);
+            if (bubble) {
+                renderMarkdown(bubble, finalAnswer);
+                if (window.SpendWiseAI && finalInsight && window.SpendWiseAI.renderInsight) {
+                    window.SpendWiseAI.renderInsight(bubble, finalInsight);
+                    log.scrollTop = log.scrollHeight;
+                } else if (window.SpendWiseAI && window.SpendWiseAI.renderVisuals) {
+                    window.SpendWiseAI.renderVisuals(bubble, finalVisuals);
+                    log.scrollTop = log.scrollHeight;
+                }
+            }
         } catch (error) {
             streamEnded = true;
             pending = '';
@@ -906,6 +1033,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('.report-ai-suggestion').forEach(function (button) {
         button.addEventListener('click', function () {
+            const list = button.closest('.report-ai-suggestions');
+            if (list) {
+                list.hidden = true;
+                if (list.previousElementSibling) list.previousElementSibling.hidden = true;
+            }
             ask(button.textContent);
         });
     });
@@ -927,6 +1059,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             log.replaceChildren();
+            document.querySelectorAll('.report-ai-suggestions').forEach(function (list) {
+                list.hidden = false;
+                if (list.previousElementSibling) list.previousElementSibling.hidden = false;
+            });
             addMessage('Hi! What would you like to talk about?', 'assistant');
         } catch (error) {
             addMessage(error.message || 'Unable to start a new conversation. Please try again.', 'error');

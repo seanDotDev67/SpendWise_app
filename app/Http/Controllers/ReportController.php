@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\AssistantProvider;
 use App\Services\AssistantProviderException;
 use App\Services\AssistantResponseGuard;
+use App\Services\FinancialInsightService;
 use App\Services\ReportDataService;
 use App\Services\SpendWiseAssistant;
 use Carbon\Carbon;
@@ -28,6 +29,7 @@ class ReportController extends Controller
 
         return view('reports.index', [
             'report' => $this->reports->forRange($request->user(), $startDate, $endDate),
+            'goals' => $request->user()->goals()->orderBy('created_at')->get(),
             'startDate' => $startDate->toDateString(),
             'endDate' => $endDate->toDateString(),
             'assistantHistory' => $request->session()->get($this->conversationKey($request), []),
@@ -103,6 +105,7 @@ class ReportController extends Controller
         $session = $request->session();
 
         return response()->stream(function () use ($assistant, $validated, $history, $user, $startDate, $endDate, $session, $key): void {
+            $financialContext = null;
             $send = function (array $event): void {
                 echo json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n";
                 if (ob_get_level() > 0) {
@@ -119,7 +122,8 @@ class ReportController extends Controller
                     $startDate,
                     $endDate,
                     fn (string $text) => $send(['type' => 'token', 'text' => $text]),
-                    $validated['page'] ?? null
+                    $validated['page'] ?? null,
+                    $financialContext
                 );
             } catch (AssistantProviderException $exception) {
                 $send(['type' => 'error', 'message' => $exception->getMessage()]);
@@ -133,13 +137,21 @@ class ReportController extends Controller
                 return;
             }
 
+            $insight = app(FinancialInsightService::class)->build($financialContext, $validated['question'], $answer);
+            $answer = $insight['message'] ?? $answer;
             $history[] = ['role' => 'user', 'content' => $validated['question']];
-            $history[] = ['role' => 'assistant', 'content' => $answer];
+            // The insight is kept so the charts can be redrawn when the page reloads.
+            $history[] = ['role' => 'assistant', 'content' => $answer, 'insight' => $insight];
             $session->put($key, array_slice($history, -12));
             // The session middleware has already finished by the time a streamed body runs.
             $session->save();
 
-            $send(['type' => 'done', 'answer' => $answer]);
+            $send([
+                'type' => 'done',
+                'answer' => $answer,
+                'visuals' => $insight['charts'] ?? [],
+                'insight' => $insight,
+            ]);
         }, 200, [
             'Content-Type' => 'application/x-ndjson; charset=UTF-8',
             'Cache-Control' => 'no-cache, no-transform',

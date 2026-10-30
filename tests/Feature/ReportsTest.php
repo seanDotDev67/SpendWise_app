@@ -109,6 +109,49 @@ class ReportsTest extends TestCase
             ->assertDontSee('Last month');
     }
 
+    public function test_reports_show_saved_progress_for_the_signed_in_users_budget_goals(): void
+    {
+        $user = User::factory()->create();
+        $goal = $user->goals()->create([
+            'name' => 'Emergency fund',
+            'icon' => 'target',
+            'target' => 10000,
+            'saved' => 3500,
+            'deadline' => '2027-06-30',
+        ]);
+        $otherUser = User::factory()->create();
+        $otherUser->goals()->create([
+            'name' => 'Private goal',
+            'icon' => 'target',
+            'target' => 50000,
+            'saved' => 20000,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('reports.index'))
+            ->assertOk()
+            ->assertSee('Savings Goals')
+            ->assertSee('Progress from the goals you set in Budgets')
+            ->assertSee('Emergency fund')
+            ->assertSee('₱3,500.00')
+            ->assertSee('₱10,000.00')
+            ->assertSee('35%')
+            ->assertSee('Deadline: Jun 30, 2027.')
+            ->assertDontSee('Private goal');
+
+        $this->assertSame($goal->id, $user->goals()->firstOrFail()->id);
+    }
+
+    public function test_reports_link_to_budgets_when_the_user_has_no_savings_goals(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get(route('reports.index'))
+            ->assertOk()
+            ->assertSee('No savings goals yet.')
+            ->assertSee('href="'.route('budgets.index').'"', false)
+            ->assertSee('Create one in Budgets');
+    }
+
     public function test_category_charts_use_the_saved_user_category_colors(): void
     {
         $this->travelTo(Carbon::parse('2026-10-28 12:00:00'));

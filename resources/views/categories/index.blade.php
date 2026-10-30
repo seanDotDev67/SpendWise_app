@@ -18,7 +18,10 @@
     }
 
     $uname = auth()->check() ? auth()->user()->name : 'Sean Andrei Lapaz';
+    $uemail = auth()->check() ? auth()->user()->email : 'sean.lapaz@example.com';
     $initials = collect(preg_split('/\s+/', trim($uname)))->filter()->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('');
+    $profilePhotoPath = auth()->user()?->profile_photo_path;
+    $profilePhotoUrl = $profilePhotoPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($profilePhotoPath) : null;
 
     $transactionsUrl = Route::has('transactions.page') ? route('transactions.page') : $r('transactions.index');
     $profileUrl = $r('profile.edit');
@@ -202,48 +205,44 @@
         .logout-btn i { font-size: 1.7rem; }
         .logout-btn:hover { background: rgba(255, 255, 255, .08); }
 
-        /* ============ MAIN ============ */
-        .main { flex: 1; min-width: 0; padding: 0 3rem 3.5rem 2.2rem; }
+        /* ============ MAIN / TOP BAR (same look as the dashboard) ============ */
+        .main { flex: 1; min-width: 0; padding: 0 2rem 3.5rem 1.7rem; }
 
         .top {
             display: flex;
             align-items: center;
-            padding: 2rem 0 2.2rem;
-            border-bottom: 1px solid rgba(59, 74, 60, .16);
-            box-shadow: 0 1px 0 rgba(255, 255, 255, .6);
+            padding: 15px 0 13px;
+            border-bottom: 3px solid #dedbc9;
         }
 
-        .search { position: relative; width: 30.9rem; }
+        .search { position: relative; width: 375px; max-width: 50%; }
 
         .search input {
             width: 100%;
-            height: 3rem;
-            padding: 0 4.2rem 0 4.4rem;
+            height: 42px;
+            padding: 0 16px 0 52px;
             border: none;
-            border-radius: .9rem;
-            background: rgba(139, 155, 114, .2);
+            border-radius: 6px;
+            background: #d7d4c0;
             font-family: inherit;
-            font-size: 1.3rem;
+            font-size: 15px;
             color: var(--green);
         }
 
-        .search input::placeholder { color: #7b8869; }
+        .search input::placeholder { color: #7a7a6a; }
         .search input:focus { outline: 2px solid rgba(59, 74, 60, .25); }
 
-        .search .l,
-        .search .r {
+        .search .l {
             position: absolute;
             top: 50%;
+            left: 16px;
             transform: translateY(-50%);
-            color: var(--green);
+            font-size: 18px;
+            color: #5b6358;
         }
 
-        .search .l { left: 1.4rem; font-size: 1.9rem; }
-        .search .r { right: 1.4rem; font-size: 1.8rem; color: #6b7d52; }
-
-        /* User block (same look as before, now a link to Profile) */
         .user { display: flex; align-items: center; margin-left: auto; }
-        .user .bell { font-size: 2.4rem; margin-right: 3.6rem; }
+        .user .bell { font-size: 24px; margin-right: 30px; }
 
         .user-link {
             display: flex;
@@ -258,25 +257,26 @@
         .user-link:active { color: inherit; }
 
         .avatar {
-            width: 3.4rem;
-            height: 3.4rem;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: #c98a94;
+            background: #c2677a;
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.35rem;
+            font-size: 16px;
             font-weight: 600;
         }
 
-        .uname { margin-left: 1.1rem; line-height: 1.25; }
-        .uname b { display: block; font-size: 1.3rem; font-weight: 600; }
-        .uname span { font-size: 1.1rem; color: #6b7d5c; }
-        .user .chev { margin-left: 2.2rem; font-size: 1.3rem; }
+        .uname { margin-left: 17px; line-height: 1.3; }
+        .uname b { display: block; font-size: 17px; font-weight: 500; }
+        .uname span { font-size: 15px; color: var(--ink); }
+        .user .chev { margin-left: 24px; font-size: 13px; }
 
         /* ============ PAGE BODY ============ */
-        .body { margin: 0 6.3rem; }
+        /* the page content is scaled down a bit so it reads like the dashboard (change .78 to taste) */
+        .body { margin: 0; zoom: .78; }
         .head { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 2.2rem; }
 
         .title {
@@ -642,11 +642,11 @@
 
             .main { padding: 0 1.4rem 3rem; }
             .top { flex-wrap: wrap; gap: 1.2rem; }
-            .search { width: 100%; }
+            .search { width: 100%; max-width: none; }
             .user { margin-left: 0; width: 100%; justify-content: space-between; }
             .user .bell { margin-right: 0; }
 
-            .body { margin: 0; }
+            .body { margin: 0; zoom: 1; }
             .head { flex-wrap: wrap; gap: 1rem; }
             .split { grid-template-columns: 1fr; margin-left: 0; row-gap: 2rem; }
             .mid { width: auto; flex: 1; }
@@ -656,9 +656,10 @@
             * { animation: none !important; transition: none !important; }
         }
     </style>
+    @include('layouts.partials.theme-styles')
 </head>
 
-<body>
+<body data-theme="{{ auth()->user()?->theme ?? 'system' }}" data-reduced-motion="{{ auth()->user()?->reduced_motion ? 'true' : 'false' }}">
 
     <div class="app">
 
@@ -692,16 +693,15 @@
 
             <header class="top">
                 <div class="search">
-                    <i class="ti ti-search l" aria-hidden="true"></i>
+                    <i class="bi bi-search l" aria-hidden="true"></i>
                     <input id="q" type="text" placeholder="Search categories..." autocomplete="off">
-                    <i class="ti ti-adjustments-horizontal r" aria-hidden="true"></i>
                 </div>
                 <div class="user">
-                    <i class="ti ti-bell bell" aria-hidden="true"></i>
+                    <i class="bi bi-bell bell" aria-hidden="true"></i>
                     <a href="{{ $profileUrl }}" class="user-link" title="Go to profile">
-                        <div class="avatar">{{ $initials }}</div>
-                        <div class="uname"><b>{{ $uname }}</b><span>Student</span></div>
-                        <i class="ti ti-chevron-down chev" aria-hidden="true"></i>
+                        <div class="avatar">@if ($profilePhotoUrl)<img src="{{ $profilePhotoUrl }}" alt="">@else{{ $initials }}@endif</div>
+                        <div class="uname"><b>{{ $uname }}</b><span>{{ $uemail }}</span></div>
+                        <i class="bi bi-chevron-down chev" aria-hidden="true"></i>
                     </a>
                 </div>
             </header>

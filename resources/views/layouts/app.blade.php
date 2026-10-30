@@ -177,6 +177,7 @@
     </style>
 
     @stack('styles')
+    @include('layouts.partials.theme-styles')
 </head>
 
 @php
@@ -191,7 +192,7 @@
     ];
 @endphp
 
-<body>
+<body data-theme="{{ $user?->theme ?? 'system' }}" data-reduced-motion="{{ $user?->reduced_motion ? 'true' : 'false' }}">
 @if ($fit ?? false)
 <div class="sw-viewport">
     <div class="sw-fit" id="swFit">
@@ -206,8 +207,16 @@
 
                 <section class="sw-page-content">
                     @if (session('status'))
+                        @php
+                            $statusMessages = [
+                                'profile-updated' => 'Your profile details have been saved.',
+                                'preferences-updated' => 'Your preferences have been saved.',
+                                'profile-photo-updated' => 'Your profile photo has been updated.',
+                                'profile-photo-deleted' => 'Your profile photo has been removed.',
+                            ];
+                        @endphp
                         <div class="alert alert-success alert-dismissible fade show mt-3 mb-0" role="alert">
-                            {{ session('status') }}
+                            {{ $statusMessages[session('status')] ?? session('status') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
