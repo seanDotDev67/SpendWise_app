@@ -32,7 +32,7 @@
         <div class="swc-log" id="swAiLog" aria-live="polite">
             @forelse ($companion['history'] as $message)
                 @if (in_array($message['role'] ?? null, ['user', 'assistant'], true))
-                    <div class="swc-bubble {{ $message['role'] }}">{{ $message['content'] }}</div>
+                    <div class="swc-bubble {{ $message['role'] }}" @if (is_array($message['insight'] ?? null)) data-insight="{{ json_encode($message['insight']) }}" @endif>{{ $message['content'] }}</div>
                 @endif
             @empty
                 <div class="swc-bubble assistant swc-greeting">Hi! I’m your SpendWise AI companion. Need help understanding your finances or using SpendWise?</div>
@@ -163,6 +163,9 @@
 
     log.querySelectorAll('.swc-bubble.assistant').forEach(function (bubble) {
         window.SpendWiseAI.renderMarkdown(bubble, bubble.textContent);
+        if (bubble.dataset.insight) {
+            try { window.SpendWiseAI.renderInsight(bubble, JSON.parse(bubble.dataset.insight)); } catch (e) { /* skip unreadable saved visuals */ }
+        }
     });
     log.scrollTop = log.scrollHeight;
 
@@ -224,6 +227,16 @@
                 onText: function (text) {
                     if (!bubble) return;
                     window.SpendWiseAI.renderMarkdown(bubble, text);
+                    log.scrollTop = log.scrollHeight;
+                },
+                onVisuals: function (visuals) {
+                    if (!bubble) return;
+                    window.SpendWiseAI.renderVisuals(bubble, visuals);
+                    log.scrollTop = log.scrollHeight;
+                },
+                onInsight: function (insight) {
+                    if (!bubble) return;
+                    window.SpendWiseAI.renderInsight(bubble, insight);
                     log.scrollTop = log.scrollHeight;
                 }
             });
