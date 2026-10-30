@@ -321,6 +321,13 @@ php artisan db:seed
 
 Do not run seeders blindly if they could create duplicate or unwanted sample data.
 
+To serve uploaded profile photos from Laravel's public storage disk, create the
+public storage link once for this checkout or deployment:
+
+```bash
+php artisan storage:link
+```
+
 ### 9. Install and build frontend assets
 
 Install the JavaScript packages declared in `package.json` using the committed lock file:
