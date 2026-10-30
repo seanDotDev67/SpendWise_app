@@ -19,8 +19,6 @@ class OllamaChatProvider implements StreamingAssistantProvider
 
     private const MAX_HISTORY_MESSAGE_CHARACTERS = 1500;
 
-    private const MAX_ANSWER_CHARACTERS = 4000;
-
     public function __construct(private readonly AssistantResponseGuard $guard) {}
 
     public function isConfigured(): bool
@@ -182,25 +180,20 @@ class OllamaChatProvider implements StreamingAssistantProvider
 
     private function acceptAnswer(string $answer, mixed $done, mixed $doneReason, ?array $financialContext): ?string
     {
-        $unsupportedNumber = $answer !== ''
-            && $financialContext !== null
-            && $this->guard->hasUnsupportedNumericClaims($answer, $financialContext);
+        $answer = $this->usePesoSign($answer);
 
-        if (
-            $done !== true
-            || $answer === ''
-            || Str::length($answer) > self::MAX_ANSWER_CHARACTERS
-            || $unsupportedNumber
-        ) {
+        if ($done !== true || $answer === '') {
             Log::warning('Ollama returned an invalid or ungrounded response.', [
                 'done' => $done,
                 'done_reason' => is_string($doneReason) ? $doneReason : null,
                 'has_text' => $answer !== '',
-                'too_long' => Str::length($answer) > self::MAX_ANSWER_CHARACTERS,
-                'unsupported_financial_number' => $unsupportedNumber,
             ]);
 
             return null;
+        }
+
+        if ($financialContext !== null && $this->guard->hasUnsupportedNumericClaims($answer, $financialContext)) {
+            Log::info('Ollama answer contains figures not found in the verified financial context.');
         }
 
         return $answer;
@@ -215,16 +208,22 @@ class OllamaChatProvider implements StreamingAssistantProvider
         $visible = preg_replace('#<think>.*?</think>#is', '', $raw) ?? $raw;
         $open = stripos($visible, '<think>');
         if ($open !== false) {
-            return substr($visible, 0, $open);
+            return $this->usePesoSign(substr($visible, 0, $open));
         }
 
         for ($length = min(6, strlen($visible)); $length > 0; $length--) {
             if (strcasecmp(substr($visible, -$length), substr('<think>', 0, $length)) === 0) {
-                return substr($visible, 0, -$length);
+                return $this->usePesoSign(substr($visible, 0, -$length));
             }
         }
 
-        return $visible;
+        // A trailing "$" may be the start of an amount whose digits have not arrived yet.
+        return $this->usePesoSign(preg_replace('/\$\s*$/', '', $visible) ?? $visible);
+    }
+
+    private function usePesoSign(string $text): string
+    {
+        return preg_replace('/\$\s?(?=\d)/', '₱', $text) ?? $text;
     }
 
     private function ensureModelIsInstalled(string $baseUrl, string $model): void

@@ -50,9 +50,10 @@ class SpendWiseAssistant
         Carbon $startDate,
         Carbon $endDate,
         callable $onToken,
-        ?string $page = null
+        ?string $page = null,
+        ?array &$usedContext = null
     ): ?string {
-        $context = $this->financialContext->forQuestion(
+        $usedContext = $context = $this->financialContext->forQuestion(
             $user,
             $question,
             $history,
