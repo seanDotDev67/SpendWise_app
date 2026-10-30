@@ -38,7 +38,10 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI') ?: rtrim(env('APP_URL', 'http://localhost'), '/').'/auth/google/callback',
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'guzzle' => [
+            'verify' => storage_path('cacert/cacert.pem'),
+        ],
     ],
 
     'gemini' => [

@@ -7,6 +7,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BudgetController;
+use App\Http\Controllers\GoalController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,7 +34,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
     Route::post('/login', [AuthController::class, 'login'])->name('login');
 });
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 use App\Http\Controllers\PasswordCodeController;
 
@@ -44,3 +46,13 @@ Route::middleware('guest')->group(function () {
     Route::get('/create-new-password', [PasswordCodeController::class, 'showReset'])->name('password.code.reset.show');
     Route::post('/create-new-password', [PasswordCodeController::class, 'reset'])->name('password.code.reset');
 });
+
+Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
+Route::put('/budgets/{category}', [BudgetController::class, 'update'])->name('budgets.update');
+Route::delete('/budgets/{category}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
+
+Route::post('/goals', [GoalController::class, 'store'])->name('goals.store');
+Route::put('/goals/{goal}', [GoalController::class, 'update'])->name('goals.update');
+Route::post('/goals/{goal}/fund', [GoalController::class, 'fund'])->name('goals.fund');
+Route::delete('/goals/{goal}', [GoalController::class, 'destroy'])->name('goals.destroy');
