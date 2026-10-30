@@ -48,6 +48,7 @@
             width: var(--sw-side-w); height: 100vh; height: 100dvh; flex-shrink: 0;
             background: var(--sw-sidebar); border-radius: 0 calc(var(--sw-u) * 3.7) calc(var(--sw-u) * 3.7) 0;
             display: flex; flex-direction: column; overflow: hidden;
+            line-height: normal; -webkit-font-smoothing: antialiased;
         }
         .sw-brand {
             height: calc(var(--sw-u) * 7.3); flex: none; display: flex; align-items: center; gap: calc(var(--sw-u) * .9);
@@ -56,7 +57,7 @@
         }
         .sw-brand .logo { width: calc(var(--sw-u) * 4); height: auto; display: block; }
         .sw-brand h1 { font-size: calc(var(--sw-u) * 2.4); font-weight: 600; line-height: 1; margin: 0; color: #fff; }
-        .sw-brand small { display: block; font-size: calc(var(--sw-u) * .95); color: #f3f3e8; margin-top: calc(var(--sw-u) * .25); white-space: nowrap; }
+        .sw-brand small { display: block; line-height: normal; font-size: calc(var(--sw-u) * .95); color: #f3f3e8; margin-top: calc(var(--sw-u) * .25); white-space: nowrap; }
         .sw-nav { margin-top: calc(var(--sw-u) * 4.6); flex: none; }
         .sw-nav a {
             position: relative;
@@ -88,8 +89,25 @@
 
         /* ================= TOPBAR ================= */
         .sw-topbar { border-bottom: 4px solid rgba(221, 213, 191, .7); }
-        .sw-search { background: #D8D3BF; border-radius: 8px; padding: 8px 16px; color: #5c6b55; max-width: 375px; width: 100%; }
+        .sw-search-wrap { max-width: 375px; width: 100%; }
+        .sw-search { background: #D8D3BF; border-radius: 8px; padding: 8px 16px; color: #5c6b55; width: 100%; }
         .sw-search input { background: transparent; border: 0; outline: 0; width: 100%; font-size: 14px; }
+        .sw-search input::-webkit-search-cancel-button { cursor: pointer; }
+        .sw-search-btn { border: 0; background: transparent; padding: 0; color: inherit; display: inline-flex; }
+        .sw-search:focus-within { box-shadow: 0 0 0 3px rgba(47, 74, 58, .25); }
+        .sw-search-results {
+            position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 1030;
+            max-height: 360px; overflow-y: auto; background: var(--sw-card); border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(47, 74, 58, .18); padding: 6px;
+        }
+        .sw-sr-group { padding: 8px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #7b8869; }
+        .sw-sr-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--sw-dark); text-decoration: none; font-size: 14px; }
+        .sw-sr-item i { font-size: 16px; color: var(--sw-sidebar); }
+        .sw-sr-item span { min-width: 0; display: flex; flex-direction: column; }
+        .sw-sr-item b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sw-sr-item small { color: #7b8869; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sw-sr-item:hover, .sw-sr-item.is-active { background: rgba(127, 148, 104, .18); color: var(--sw-dark); }
+        .sw-sr-empty { padding: 14px 10px; font-size: 14px; color: #7b8869; }
         .sw-avatar { width: 40px; height: 40px; border-radius: 50%; background: #D96B7A; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500; }
         .sw-profile-link { color: inherit; text-decoration: none; border-radius: 999px; }
         .sw-profile-link:hover { color: var(--sw-dark); }
@@ -149,7 +167,7 @@
             .sw-main { padding-inline: 16px !important; }
             .sw-topbar { flex-wrap: wrap; gap: 12px !important; }
             .sw-topbar-actions { order: 1; width: 100%; justify-content: flex-end; }
-            .sw-search { order: 2; flex: 1 1 100%; max-width: none; }
+            .sw-search-wrap { order: 2; flex: 1 1 100%; max-width: none; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -203,6 +221,7 @@
 </div>
 @endif
 
+@include('layouts.partials.ai-companion')
 @include('layouts.partials.footer')
 </body>
 </html>

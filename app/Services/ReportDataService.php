@@ -4,23 +4,13 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Models\User;
+use App\Support\CategoryColor;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 
 class ReportDataService
 {
-    private const CATEGORY_COLORS = [
-        '#2F4A3A',
-        '#7F9468',
-        '#D98E96',
-        '#F2C4C9',
-        '#B8A98A',
-        '#6687A8',
-        '#C49A54',
-        '#7E6A9B',
-    ];
-
     public function forRange(User $user, Carbon $startDate, Carbon $endDate): array
     {
         $transactions = $user->transactions()->whereBetween('date', [
@@ -46,12 +36,22 @@ class ReportDataService
                     ->on('categories.user_id', '=', 'transactions.user_id');
             })
             ->where('transactions.type', 'expense')
-            ->select('categories.name')
+            ->select('categories.name', 'categories.color')
             ->selectRaw('SUM(transactions.amount) as spent')
-            ->groupBy('categories.id', 'categories.name')
+            ->groupBy('categories.id', 'categories.name', 'categories.color')
             ->orderByDesc('spent')
             ->get();
 
+        $fallbackColors = [
+            '#2F4A3A',
+            '#7F9468',
+            '#D98E96',
+            '#F2C4C9',
+            '#B8A98A',
+            '#6687A8',
+            '#C49A54',
+            '#7E6A9B',
+        ];
         $categories = $categoryRows->values()->map(
             fn ($category, int $index): array => [
                 'name' => $category->name,
@@ -59,7 +59,10 @@ class ReportDataService
                 'percentage' => $expenses > 0
                     ? round(((float) $category->spent / $expenses) * 100)
                     : 0,
-                'color' => self::CATEGORY_COLORS[$index % count(self::CATEGORY_COLORS)],
+                'color' => CategoryColor::resolve(
+                    $category->color,
+                    $fallbackColors[$index % count($fallbackColors)]
+                ),
             ]
         );
 

@@ -24,14 +24,14 @@
     $profileUrl = $r('profile.edit');
     $logoutUrl = Route::has('logout') ? route('logout') : '#';
 
-    // [label, tabler icon, link, active?]
+    // [label, bootstrap icon (same as layouts/app), link, active?]
     $nav = [
-        ['Dashboard', 'layout-dashboard', $r('dashboard'), false],
-        ['Transactions', 'arrows-left-right', $transactionsUrl, false],
+        ['Dashboard', 'grid-1x2-fill', $r('dashboard'), false],
+        ['Transactions', 'arrow-left-right', $transactionsUrl, false],
         ['Categories', 'tag', $r('categories.index'), true],
-        ['Budgets', 'moneybag', $r('budgets.index'), false],
-        ['Reports', 'chart-bar', $r('reports.index'), false],
-        ['Profile', 'user-circle', $profileUrl, false],
+        ['Budgets', 'piggy-bank', $r('budgets.index'), false],
+        ['Reports', 'bar-chart', $r('reports.index'), false],
+        ['Profile', 'person-circle', $profileUrl, false],
     ];
 
     $storeUrl = Route::has('categories.store') ? route('categories.store') : '#';
@@ -49,6 +49,7 @@
     <link rel="icon" href="{{ asset('images/spendwise-logo.png') }}">
 
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
@@ -673,7 +674,7 @@
             <nav>
                 @foreach ($nav as [$label, $icon, $href, $active])
                     <a href="{{ $href }}" class="{{ $active ? 'act' : '' }}">
-                        <i class="ti ti-{{ $icon }}" aria-hidden="true"></i>{{ $label }}
+                        <i class="bi bi-{{ $icon }}" aria-hidden="true"></i>{{ $label }}
                     </a>
                 @endforeach
             </nav>
@@ -681,7 +682,7 @@
             <form method="POST" action="{{ $logoutUrl }}" class="logout-form">
                 @csrf
                 <button type="submit" class="logout-btn">
-                    <i class="ti ti-logout" aria-hidden="true"></i>Logout
+                    <i class="bi bi-box-arrow-left" aria-hidden="true"></i>Logout
                 </button>
             </form>
         </aside>
@@ -941,6 +942,9 @@
             });
             $('seg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pick(+b.dataset.id); });
 
+            const initialQuery = new URLSearchParams(window.location.search).get('q');
+            if (initialQuery) { $('q').value = initialQuery; $('q').dispatchEvent(new Event('input')); }
+
             $('panel').addEventListener('input', e => { if (e.target.id === 'fnameIn') { draft.name = e.target.value; $('ferr').textContent = ''; } });
             $('panel').addEventListener('change', e => { if (e.target.id === 'ftypeIn') draft.type = e.target.value; });
             $('panel').addEventListener('click', e => {
@@ -973,6 +977,7 @@
             renderAll();
         })();
     </script>
+    @include('layouts.partials.ai-companion')
 </body>
 
 </html>
