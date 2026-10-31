@@ -656,6 +656,7 @@
             * { animation: none !important; transition: none !important; }
         }
     </style>
+    @include('layouts.partials.motion-styles')
     @include('layouts.partials.theme-styles')
 </head>
 
@@ -788,10 +789,11 @@
             // ===== top breakdown bar =====
             function renderBar() {
                 const list = data.filter(c => c.type === tab && c.total > 0);
+                const grand = typeTotal(tab);
                 $('barLabel').textContent = tab === 'expense' ? 'Expenses this month' : 'Income this month';
                 $('barTotal').textContent = money(typeTotal(tab));
                 $('seg').innerHTML = list.length ? list.map((c, i) =>
-                    '<button type="button" data-id="' + c.id + '" title="' + esc(c.name) + ' · ' + money(c.total) + '" aria-label="' + esc(c.name) + ': ' + money(c.total) + '" style="flex:' + c.total + ' 1 0;background:' + (PAL[c.color] || PAL.forest).c + ';--i:' + i + ';--o:' + (isOn(c) ? 1 : .55) + '"></button>'
+                    '<button type="button" data-id="' + c.id + '" data-tip-title="' + esc(c.name) + '" data-tip-color="' + esc((PAL[c.color] || PAL.forest).c) + '" data-tip-rows="' + esc(JSON.stringify([{ l: 'Amount', v: money(c.total) }, { l: 'Share', v: (grand > 0 ? Math.round(c.total / grand * 1000) / 10 : 0) + '%' }])) + '" aria-label="' + esc(c.name) + ': ' + money(c.total) + '" style="flex:' + c.total + ' 1 0;background:' + (PAL[c.color] || PAL.forest).c + ';--i:' + i + ';--o:' + (isOn(c) ? 1 : .55) + '"></button>'
                 ).join('') : '<span class="empty"></span>';
             }
 
@@ -977,6 +979,7 @@
             renderAll();
         })();
     </script>
+    @include('layouts.partials.motion')
     @include('layouts.partials.ai-companion')
 </body>
 
