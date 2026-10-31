@@ -488,7 +488,15 @@
                     @else
                         <div class="report-bars" role="img" aria-label="Monthly income and expense comparison">
                             @foreach ($report['incomeExpenseBars'] as $month)
-                                <div class="report-month-bars" title="{{ $month['label'] }}: income ₱{{ number_format($month['income'], 2) }}, expenses ₱{{ number_format($month['expenses'], 2) }}">
+                                @php
+                                    $monthNet = (float) $month['income'] - (float) $month['expenses'];
+                                    $monthRows = [
+                                        ['k' => 'income', 'l' => 'Income', 'v' => '₱'.number_format($month['income'], 2)],
+                                        ['k' => 'expenses', 'l' => 'Expenses', 'v' => '₱'.number_format($month['expenses'], 2)],
+                                        ['l' => 'Net', 'v' => ($monthNet < 0 ? '-' : '').'₱'.number_format(abs($monthNet), 2)],
+                                    ];
+                                @endphp
+                                <div class="report-month-bars" data-tip-title="{{ $month['label'] }}" data-tip-rows="{{ json_encode($monthRows) }}">
                                     <div class="report-bar-pair">
                                         <span class="report-bar income" style="height: {{ $month['incomeHeight'] }}%"></span>
                                         <span class="report-bar expenses" style="height: {{ $month['expenseHeight'] }}%"></span>
@@ -512,7 +520,9 @@
                     @else
                         <div class="report-category-chart">
                             <div class="report-donut" role="img" aria-label="Expense share by category"
-                                 style="background: {{ $report['categoryGradient'] }}">
+                                 style="background: {{ $report['categoryGradient'] }}"
+                                 data-hl-group="cat"
+                                 data-donut="{{ json_encode($report['categories']->map(fn ($c) => ['n' => $c['name'], 'v' => (float) $c['spent'], 'a' => '₱'.number_format($c['spent'], 2), 'p' => $c['percentage'], 'c' => $c['color']])->values()) }}">
                                 <div class="report-donut-hole">
                                     <strong>₱{{ number_format($report['expenses'], 2) }}</strong>
                                     <span>Total expenses</span>
@@ -520,7 +530,7 @@
                             </div>
                             <ul class="report-category-legend">
                                 @foreach ($report['categories']->take(5) as $category)
-                                    <li>
+                                    <li data-hl="cat:{{ $loop->index }}">
                                         <span class="report-category-swatch" style="background: {{ $category['color'] }}"></span>
                                         <span class="report-category-name">{{ $category['name'] }}</span>
                                         <span class="report-category-percent">{{ $category['percentage'] }}%</span>
@@ -573,7 +583,11 @@
                                         ? ($maxPos > 0 ? max(3, round($m['net'] / $maxPos * 100)) : 0)
                                         : ($maxNeg > 0 ? max(3, round(abs($m['net']) / $maxNeg * 100)) : 0);
                                 @endphp
-                                <div class="report-cf-col" title="{{ $m['label'] }}: income ₱{{ number_format($m['income'], 2) }}, expenses ₱{{ number_format($m['expenses'], 2) }}, net ₱{{ number_format($m['net'], 2) }}">
+                                <div class="report-cf-col" data-tip-title="{{ $m['label'] }}" data-tip-rows="{{ json_encode([
+                                    ['l' => 'Income', 'v' => '₱'.number_format($m['income'], 2)],
+                                    ['l' => 'Expenses', 'v' => '₱'.number_format($m['expenses'], 2)],
+                                    ['l' => 'Net', 'v' => ($m['net'] < 0 ? '-' : '').'₱'.number_format(abs($m['net']), 2)],
+                                ]) }}">
                                     <div class="report-cf-top" style="height: {{ round($posShare * 100, 2) }}%">
                                         @if ($up)
                                             <span class="report-cf-val pos">{{ $short((float) $m['net']) }}</span>
@@ -613,7 +627,8 @@
                     @else
                         <div class="report-top-list">
                             @foreach ($report['topCategories'] as $category)
-                                <div class="report-top-item">
+                                <div class="report-top-item" data-tip-title="{{ $category['name'] }}" data-tip-color="{{ $category['color'] }}"
+                                     data-tip-rows="{{ json_encode([['l' => 'Spent', 'v' => '₱'.number_format($category['spent'], 2)], ['l' => 'Share of expenses', 'v' => $category['percentage'].'%']]) }}">
                                     <span class="report-top-name">{{ $category['name'] }}</span>
                                     <span class="report-top-amount">₱{{ number_format($category['spent'], 2) }} · {{ $category['percentage'] }}%</span>
                                     <div class="report-top-track">

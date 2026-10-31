@@ -37,8 +37,20 @@ class AssistantVisuals
             $visuals[] = $this->simulation($context['simulation']);
         }
 
+        $goals = $context['savings_goals'] ?? null;
+        $week = $context['weekly_summary'] ?? null;
+        $topicVisuals = [];
+        if (is_array($goals) && ! empty($goals['available'])) {
+            array_push($topicVisuals, ...$this->goalVisuals($goals));
+        }
+        if (is_array($week)) {
+            array_push($topicVisuals, ...$this->weekVisuals($week));
+        }
+
         $series = $context['spending_by_day'] ?? $context['spending_by_week'] ?? null;
-        if (is_array($budgetStatus) && ! empty($budgetStatus['available'])) {
+        if ($topicVisuals !== []) {
+            array_push($visuals, ...$topicVisuals);
+        } elseif (is_array($budgetStatus) && ! empty($budgetStatus['available'])) {
             $visuals[] = $this->budgetUtilization($budgetStatus);
         } elseif ($series !== null && count($series) >= 2) {
             $visuals[] = $this->spendingSeries($series, isset($context['spending_by_day']));
@@ -71,6 +83,80 @@ class AssistantVisuals
         }
 
         return array_values(array_filter($visuals));
+    }
+
+    /**
+     * @param  array<string, mixed>  $goals
+     * @return array<int, array<string, mixed>>
+     */
+    private function goalVisuals(array $goals): array
+    {
+        $items = array_slice($goals['goals'], 0, 6);
+        $visuals = [];
+
+        foreach ($items as $goal) {
+            $plan = $goal['hypothetical_contribution_plan'] ?? null;
+            if (is_array($plan)) {
+                $visuals[] = [
+                    'type' => 'comparison',
+                    'title' => $goal['name'].': saved vs projected vs target',
+                    'labels' => ['Saved now', 'Projected', 'Target'],
+                    'datasets' => [['label' => 'Amount', 'data' => [
+                        (float) $goal['saved'], (float) $plan['projected_saved'], (float) $goal['target'],
+                    ], 'colors' => ['#A8B1A9', '#D9A441', '#2F4A3A']]],
+                    'kind' => 'simulation',
+                    'note' => 'Hypothetical: assumes you add '.number_format((float) $plan['contribution_amount'], 2).' '.$plan['contribution_frequency'].' for '.$plan['horizon_months'].' month(s).',
+                ];
+            }
+        }
+
+        if ($visuals === []) {
+            $visuals[] = [
+                'type' => 'progress',
+                'title' => 'Savings goal progress',
+                'labels' => array_map(fn (array $g): string => (string) $g['name'], $items),
+                'datasets' => [['label' => 'Saved (%)', 'data' => array_map(fn (array $g): float => (float) $g['progress_percent'], $items)]],
+                'kind' => 'actual',
+                'note' => 'Saved amount compared with each goal target.',
+            ];
+
+            $withEstimate = array_values(array_filter($items, fn (array $g): bool => isset($g['estimated_months_to_reach'])
+                && $g['estimated_months_to_reach']['typical'] !== null));
+            if ($withEstimate !== []) {
+                $visuals[] = [
+                    'type' => 'bar',
+                    'title' => 'Estimated months to reach each goal',
+                    'labels' => array_map(fn (array $g): string => (string) $g['name'], $withEstimate),
+                    'datasets' => [['label' => 'Months at typical pace', 'color' => '#2F704F', 'data' => array_map(fn (array $g): float => (float) $g['estimated_months_to_reach']['typical'], $withEstimate)]],
+                    'kind' => 'simulation',
+                    'note' => 'Estimate from your recent recorded net cash flow; not a guarantee.',
+                ];
+            }
+        }
+
+        return $visuals;
+    }
+
+    /**
+     * @param  array<string, mixed>  $week
+     * @return array<int, array<string, mixed>>
+     */
+    private function weekVisuals(array $week): array
+    {
+        $visuals = [];
+        $daily = $week['daily_spending'] ?? [];
+        if (count($daily) >= 2) {
+            $visuals[] = $this->spendingSeries($daily, true);
+            $visuals[0]['title'] = 'Spending over the last 7 days';
+        }
+        $top = $week['top_categories'] ?? [];
+        if ($top !== []) {
+            $bars = $this->categoryBars($top);
+            $bars['title'] = 'Top categories this week';
+            $visuals[] = $bars;
+        }
+
+        return $visuals;
     }
 
     /** @return array<string, mixed> */

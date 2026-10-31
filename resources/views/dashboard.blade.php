@@ -189,7 +189,9 @@
                                     <small class="text-muted" style="font-size:10px">This Month · {{ $now->format('F Y') }}</small>
 
                                     <div class="sw-spending-breakdown d-flex align-items-center gap-4 mt-3">
-                                        <div class="sw-donut" style="--sw-donut-gradient: {{ $donut }}">
+                                        <div class="sw-donut" role="img" aria-label="Spending by category this month" style="--sw-donut-gradient: {{ $donut }}"
+                                             data-hl-group="dash"
+                                             data-donut="{{ json_encode($spendingCategories->map(fn ($c) => ['n' => $c['name'], 'v' => (float) $c['spent'], 'a' => '₱'.number_format($c['spent'], 2), 'p' => $c['percentage'], 'c' => $c['color']])->values()) }}">
                                             <div class="sw-donut-hole">
                                                 <span class="fs-6 fw-semibold">₱{{ number_format($totalSpent, 2) }}</span>
                                                 <span style="font-size:9px">This month</span>
@@ -197,7 +199,7 @@
                                         </div>
                                         <ul class="sw-spending-legend list-unstyled mb-0" style="font-size:11px">
                                             @forelse ($spendingCategories as $category)
-                                                <li class="d-flex align-items-center gap-2 mb-2">
+                                                <li class="d-flex align-items-center gap-2 mb-2" data-hl="dash:{{ $loop->index }}">
                                                     <span class="dot" style="background: {{ $category['color'] }}"></span>
                                                     <span>{{ $category['name'] }}</span>
                                                 </li>
@@ -220,7 +222,10 @@
 
                                     <div class="mt-2">
                                         @forelse ($spendingCategories as $category)
-                                            <div class="sw-progress-item d-flex align-items-center gap-3 mb-2">
+                                            <div class="sw-progress-item d-flex align-items-center gap-3 mb-2"
+                                                 data-tip-title="{{ $category['name'] }}" data-tip-color="{{ $category['color'] }}"
+                                                 data-tip-rows="{{ json_encode([['l' => 'Spent', 'v' => '₱'.number_format($category['spent'], 2)], ['l' => 'Share of expenses', 'v' => $category['percentage'].'%']]) }}"
+                                                 data-hl="dash:{{ $loop->index }}">
                                                 <span class="dot" style="background: {{ $category['color'] }}; width:16px; height:16px"></span>
                                                 <div class="flex-grow-1">
                                                     <div class="sw-progress-row d-flex justify-content-between gap-2" style="font-size:10px">
@@ -293,7 +298,7 @@
                                             @if ($lead['chart']['kind'] === 'bars')
                                                 <div class="sw-habit-bars" role="img" aria-label="Spending by weekday">
                                                     @foreach ($lead['chart']['rows'] as $row)
-                                                        <div class="sw-habit-bar-col" title="{{ $row['label'] }}: ₱{{ number_format($row['value'], 2) }}">
+                                                        <div class="sw-habit-bar-col" data-tip-title="{{ $row['label'] }}" data-tip-rows="{{ json_encode([['l' => 'Spent', 'v' => '₱'.number_format($row['value'], 2)]]) }}">
                                                             <div class="sw-habit-bar {{ $row['highlight'] ? 'on' : '' }}" style="height: {{ max(4, $row['percent']) }}%"></div>
                                                             <span>{{ $row['label'] }}</span>
                                                         </div>

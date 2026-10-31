@@ -68,6 +68,14 @@ class AssistantFinancialContext
             $context['budget_status'] = $this->budgetStatus($user);
         }
 
+        if ($this->asksAboutGoals($contextQuestion)) {
+            $context['savings_goals'] = $this->savingsGoals($user, $contextQuestion);
+        }
+
+        if ($this->asksForWeekSummary($contextQuestion)) {
+            $context['weekly_summary'] = $this->weeklySummary($user);
+        }
+
         if ($this->asksAboutBalance($contextQuestion)) {
             $totals = $user->transactions()
                 ->selectRaw(
@@ -186,6 +194,10 @@ class AssistantFinancialContext
             return [$today->copy()->startOfMonth()->subMonthsNoOverflow($months - 1), $today];
         }
 
+        if ($this->asksForWeekSummary($question)) {
+            return [$today->copy()->subDays(6), $today];
+        }
+
         if (preg_match('/\bthis month\b/i', $question) === 1) {
             return [$today->copy()->startOfMonth(), $today];
         }
@@ -293,9 +305,222 @@ class AssistantFinancialContext
         return (bool) preg_match('/\b(?:budgets?|savings?|saving rate|utili[sz]ation|afford|income left|how much of my income)\b/i', $question);
     }
 
+    /**
+     * Parses "if I add 100 every month/week for … in the next year" into a monthly rate and horizon.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function contributionPlan(string $question): ?array
+    {
+        if (preg_match('/\b(?:add(?:ed|ing)?|sav(?:e|ed|ing)|put(?:ting)?|deposit(?:ed|ing)?|contribut(?:e|ed|ing)|set(?:ting)? aside|invest(?:ed|ing)?)\b[^0-9]{0,15}(?:₱|php\s*|p\s*)?(\d[\d,]*(?:\.\d+)?)(?:\s*(?:pesos?|php))?(?:\s*(?:every|each|per|a|\/)\s*(day|week|month|year)|\s+(daily|weekly|monthly|yearly))?/iu', $question, $m) !== 1) {
+            return null;
+        }
+
+        $amount = (float) str_replace(',', '', $m[1]);
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $unit = strtolower($m[2] ?? '') ?: strtolower($m[3] ?? '');
+        $unit = ['daily' => 'day', 'weekly' => 'week', 'monthly' => 'month', 'yearly' => 'year'][$unit] ?? $unit;
+        $assumed = $unit === '';
+        if ($assumed && preg_match('/\b(?:every|each|per)\s+(day|week|month|year)\b/i', $question, $every) === 1) {
+            $unit = strtolower($every[1]);
+            $assumed = false;
+        }
+        $unit = $unit ?: 'month';
+        $perMonth = $amount * ['day' => 30, 'week' => 52 / 12, 'month' => 1, 'year' => 1 / 12][$unit];
+
+        $horizon = 12;
+        $words = ['one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5, 'six' => 6, 'seven' => 7,
+            'eight' => 8, 'nine' => 9, 'ten' => 10, 'eleven' => 11, 'twelve' => 12];
+        if (preg_match('/\b(\d{1,2}|'.implode('|', array_keys($words)).')\s+(month|year|week)s?\b/i', $question, $h) === 1) {
+            $n = is_numeric($h[1]) ? (int) $h[1] : $words[strtolower($h[1])];
+            $horizon = max(1, (int) round($n * ['month' => 1, 'year' => 12, 'week' => 12 / 52][strtolower($h[2])]));
+        } elseif (preg_match('/\b(?:next|this|one|a|1)\s+year\b/i', $question) === 1) {
+            $horizon = 12;
+        } elseif (preg_match('/\b(?:next|this)\s+month\b/i', $question) === 1) {
+            $horizon = 1;
+        }
+
+        return [
+            'amount' => $amount,
+            'unit' => 'per '.$unit,
+            'assumed_unit' => $assumed,
+            'per_month' => $perMonth,
+            'horizon_months' => min(120, $horizon),
+        ];
+    }
+
     private function asksAboutBudget(string $question): bool
     {
         return (bool) preg_match('/\b(?:budgets?|spending limits?|category limits?)\b/i', $question);
+    }
+
+    private function asksAboutGoals(string $question): bool
+    {
+        return (bool) preg_match('/\b(?:goals?|saving for|savings? target|deadline|how long (?:will|until|before|to)|when (?:will|can|would) i (?:reach|hit|finish|afford|get)|if i (?:keep|continue)|at this (?:rate|pace)|forecast|projection|project(?:ed)?|estimate)\b/i', $question);
+    }
+
+    private function asksForWeekSummary(string $question): bool
+    {
+        return (bool) preg_match('/\b(?:(?:1|one|a)[- ]week|weekly|week(?:ly)?[^.?!]{0,30}\b(?:report|summary|spending|expenses?)|(?:report|summary|spending|expenses?)[^.?!]{0,30}\bweek|(?:this|past|last) (?:week|7 days|seven days)|spending habits?|summary of my (?:week|spending))\b/i', $question);
+    }
+
+    /**
+     * Saved goals with progress and a ranged estimate based on recent net cash flow.
+     *
+     * @return array<string, mixed>
+     */
+    private function savingsGoals(User $user, string $question = ''): array
+    {
+        $today = now()->startOfDay();
+        $goals = $user->goals()->orderBy('created_at')->get();
+        $plan = $this->contributionPlan($question);
+
+        // Three consecutive 30-day windows give a low / typical / high saving pace.
+        $windows = [];
+        for ($i = 0; $i < 3; $i++) {
+            $end = $today->copy()->subDays($i * 30);
+            $start = $end->copy()->subDays(29);
+            $totals = $user->transactions()
+                ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+                ->selectRaw(
+                    'COALESCE(SUM(CASE WHEN type = ? THEN amount ELSE 0 END), 0) as income,
+                     COALESCE(SUM(CASE WHEN type = ? THEN amount ELSE 0 END), 0) as expenses',
+                    ['income', 'expense']
+                )->first();
+            $windows[] = round((float) $totals->income - (float) $totals->expenses, 2);
+        }
+
+        $low = min($windows);
+        $high = max($windows);
+        $typical = round(array_sum($windows) / count($windows), 2);
+        $fmt = fn (float $n): string => number_format($n, 2, '.', '');
+        $monthsFor = fn (float $remaining, float $pace): ?string => $pace > 0
+            ? number_format($remaining / $pace, 1, '.', '')
+            : null;
+
+        $mentioned = $goals->filter(fn ($g): bool => preg_match(
+            '/(?<![\pL\pN])'.preg_quote(mb_strtolower($g->name), '/').'(?![\pL\pN])/u',
+            mb_strtolower($question)
+        ) === 1)->pluck('id');
+
+        $items = $goals->map(function ($goal) use ($today, $low, $high, $typical, $fmt, $monthsFor, $plan, $mentioned): array {
+            $target = round((float) $goal->target, 2);
+            $saved = round((float) $goal->saved, 2);
+            $remaining = max(0, round($target - $saved, 2));
+            $item = [
+                'name' => $goal->name,
+                'target' => $fmt($target),
+                'saved' => $fmt($saved),
+                'remaining' => $fmt($remaining),
+                'progress_percent' => $target > 0 ? min(100, (int) round($saved / $target * 100)) : 0,
+                'status' => $remaining <= 0 ? 'reached' : 'in_progress',
+            ];
+
+            if ($goal->deadline !== null) {
+                $daysLeft = (int) $today->diffInDays($goal->deadline->copy()->startOfDay(), false);
+                $item['deadline'] = $goal->deadline->toDateString();
+                $item['days_left'] = $daysLeft;
+                if ($remaining > 0 && $daysLeft > 0) {
+                    $item['needed_per_month'] = $fmt(round($remaining / ($daysLeft / 30), 2));
+                }
+            }
+
+            if ($plan !== null && ($mentioned->isEmpty() || $mentioned->contains($goal->id))) {
+                $perMonth = $plan['per_month'];
+                $added = round($perMonth * $plan['horizon_months'], 2);
+                $finalSaved = round($saved + $added, 2);
+                $item['hypothetical_contribution_plan'] = [
+                    'is_hypothetical' => true,
+                    'contribution_amount' => $fmt($plan['amount']),
+                    'contribution_frequency' => $plan['unit'],
+                    'frequency_assumed' => $plan['assumed_unit'],
+                    'horizon_months' => $plan['horizon_months'],
+                    'monthly_equivalent' => $fmt(round($perMonth, 2)),
+                    'projected_added' => $fmt($added),
+                    'projected_saved' => $fmt($finalSaved),
+                    'reaches_target_in_horizon' => $finalSaved >= $target,
+                    'shortfall' => $fmt(max(0, round($target - $finalSaved, 2))),
+                    'months_needed' => $remaining <= 0 ? '0.0' : ($perMonth > 0 ? number_format($remaining / $perMonth, 1, '.', '') : null),
+                ];
+            }
+
+            if ($remaining > 0) {
+                $item['estimated_months_to_reach'] = [
+                    'fastest' => $monthsFor($remaining, $high),
+                    'typical' => $monthsFor($remaining, $typical),
+                    'slowest' => $monthsFor($remaining, $low),
+                ];
+            }
+
+            return $item;
+        })->values()->all();
+
+        return [
+            'available' => $goals->isNotEmpty(),
+            'goals' => $items,
+            'total_target' => $fmt((float) $goals->sum('target')),
+            'total_saved' => $fmt((float) $goals->sum('saved')),
+            'monthly_saving_pace' => [
+                'basis' => 'Recorded income minus expenses over each of the last three 30-day periods; an estimate, not a guarantee. A null value means that pace is not positive, so the goal would not be reached.',
+                'lowest' => $fmt($low),
+                'typical' => $fmt($typical),
+                'highest' => $fmt($high),
+            ],
+            'projected_added_savings' => [
+                'in_1_month' => ['low' => $fmt($low), 'high' => $fmt($high)],
+                'in_3_months' => ['low' => $fmt($low * 3), 'high' => $fmt($high * 3)],
+                'in_6_months' => ['low' => $fmt($low * 6), 'high' => $fmt($high * 6)],
+            ],
+        ];
+    }
+
+    /**
+     * The last seven days (including today) compared with the seven days before.
+     *
+     * @return array<string, mixed>
+     */
+    private function weeklySummary(User $user): array
+    {
+        $today = now()->startOfDay();
+        $start = $today->copy()->subDays(6);
+        $previousStart = $start->copy()->subDays(7);
+        $previousEnd = $start->copy()->subDay();
+
+        $week = $this->reports->forRange($user, $start, $today);
+        $previous = $this->reports->forRange($user, $previousStart, $previousEnd);
+        $daily = collect($this->spendingSeries($user, $today, $start, 'daily'));
+        $busiest = $daily->sortByDesc(fn (array $day): float => (float) $day['spent'])->first();
+        $spent = round((float) $week['expenses'], 2);
+        $previousSpent = round((float) $previous['expenses'], 2);
+
+        return [
+            'period' => ['start' => $start->toDateString(), 'end' => $today->toDateString()],
+            'income' => number_format($week['income'], 2, '.', ''),
+            'expenses' => number_format($spent, 2, '.', ''),
+            'net_cash_flow' => number_format($week['net'], 2, '.', ''),
+            'transaction_count' => $week['transactionCount'],
+            'average_daily_spend' => number_format($spent / 7, 2, '.', ''),
+            'busiest_day' => $busiest !== null && (float) $busiest['spent'] > 0
+                ? ['label' => $busiest['label'], 'spent' => $busiest['spent']]
+                : null,
+            'daily_spending' => $daily->all(),
+            'top_categories' => $week['categories']->take(5)->map(fn (array $c): array => [
+                'name' => $c['name'],
+                'spent' => number_format($c['spent'], 2, '.', ''),
+                'share_percent' => $c['percentage'],
+            ])->values()->all(),
+            'previous_week' => [
+                'expenses' => number_format($previousSpent, 2, '.', ''),
+                'change' => number_format($spent - $previousSpent, 2, '.', ''),
+                'change_percent' => $previousSpent > 0 ? round(($spent - $previousSpent) / $previousSpent * 100) : null,
+            ],
+            'weekly_pace_if_unchanged' => [
+                'estimated_month_spend' => number_format($spent / 7 * 30, 2, '.', ''),
+            ],
+        ];
     }
 
     /**
@@ -353,11 +578,14 @@ class AssistantFinancialContext
 
     private function isPersonalFinanceQuestion(string $question): bool
     {
-        return (bool) preg_match('/\b(?:my|our)\s+(?:(?:daily|weekly|monthly|total|overall)\s+)?(?:money|income|earnings?|expenses?|spending|transactions?|budgets?|balance|savings?|categories?)\b/i', $question)
+        return (bool) preg_match('/\b(?:my|our)\s+(?:[\w-]+\s+){0,3}?(?:money|income|earnings?|expenses?|spending|spendings?|transactions?|budgets?|balance|savings?|categories?)\b/i', $question)
+            || (bool) preg_match('/\b(?:spending|expenses?|income|transactions?)\s+(?:report|summary|recap|overview|breakdown|habits?|review)\b/i', $question)
+            || (bool) preg_match('/\b(?:report|summary|recap|overview|breakdown|review)\b.{0,25}\b(?:of|on|for)\b.{0,15}\b(?:spending|expenses?|income|transactions?|week|month)\b/i', $question)
             || (bool) preg_match('/\b(?:reduce|cut|lower|decrease|trim)\b[^%]{0,50}\b(?:expenses?|spending)\b[^%]{0,20}\bby\s+\d/i', $question)
             || (bool) preg_match('/\b(?:how much did i (?:spend|earn|save)|how much have i spent|where does (?:most of )?my money go|highest spending category|spending by category|spending this month|total (?:income|expenses|spending)|transactions? this month|compare\b.{0,50}\bspending|save (?:more|money)|savings? plan|spend less|reduce (?:my )?(?:expenses|spending)|cut (?:my )?expenses|cash flow|overspending|unusual spending|recurring expenses?|net worth|available balance|do i have enough)\b/i', $question)
             || (bool) preg_match('/\bcategory\b.{0,35}\b(?:highest|most|spending|spent)\b/i', $question)
-            || (bool) preg_match('/\b(?:am i|do i|can i)\b.{0,35}\b(?:budgets?|afford|debt)\b/i', $question);
+            || (bool) preg_match('/\b(?:am i|do i|can i)\b.{0,35}\b(?:budgets?|afford|debt)\b/i', $question)
+            || (bool) preg_match('/\b(?:my|our)\s+(?:[\w-]+\s+){0,3}?goals?\b|\bsaving for\b|\b(?:weekly|1[- ]week|one[- ]week) (?:summary|report|recap)\b|\bspending habits?\b|\bsummary of my (?:week|spending)\b|\bif i (?:keep|continue)\b.{0,40}\b(?:saving|spending|putting|adding)\b/i', $question);
     }
 
     private function asksAboutBalance(string $question): bool
