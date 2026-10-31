@@ -16,6 +16,20 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Temporary probe for diagnosing the deployed session middleware; remove after verification.
+Route::get('/__session-diagnostic', function () {
+    return response()->json([
+        'environment' => app()->environment(),
+        'config_cached' => app()->configurationIsCached(),
+        'session_driver' => config('session.driver'),
+        'session_cookie_name' => config('session.cookie'),
+        'session_domain_is_null' => config('session.domain') === null,
+        'session_secure' => config('session.secure'),
+        'request_is_secure' => request()->isSecure(),
+        'session_id_length' => strlen(request()->session()->getId()),
+    ]);
+});
+
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
