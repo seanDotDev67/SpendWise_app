@@ -177,6 +177,7 @@
     </style>
 
     @stack('styles')
+    @include('layouts.partials.motion-styles')
     @include('layouts.partials.theme-styles')
 </head>
 
@@ -230,6 +231,7 @@
 </div>
 @endif
 
+@include('layouts.partials.motion')
 @include('layouts.partials.ai-companion')
 @include('layouts.partials.footer')
 </body>

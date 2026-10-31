@@ -28,7 +28,8 @@ class FinancialInsightService
         $parsed = $this->validator->parseModelOutput($modelOutput);
         $facts = $this->facts($context);
         $hasBudgets = ! empty($context['budget_status']['available']);
-        $insufficient = (int) ($context['recorded_totals']['transaction_count'] ?? 0) === 0 && ! $hasBudgets;
+        $hasGoals = ! empty($context['savings_goals']['available']);
+        $insufficient = (int) ($context['recorded_totals']['transaction_count'] ?? 0) === 0 && ! $hasBudgets && ! $hasGoals;
 
         $payload = $insufficient
             ? [
@@ -88,6 +89,11 @@ class FinancialInsightService
             $range['start'] ?? '?',
             $range['end'] ?? '?'
         );
+
+        $topic = $this->topicFacts($context);
+        if ($topic !== null) {
+            return $topic;
+        }
 
         if (isset($context['simulation'])) {
             $sim = $context['simulation'];
@@ -205,6 +211,114 @@ class FinancialInsightService
             'recommendations' => $recommendations,
             'severity' => $severity,
         ];
+    }
+
+    /**
+     * Insights for goal and weekly questions, built only from those parts of the context so the
+     * answer reflects what was asked rather than the generic category/income summary.
+     *
+     * @param  array<string, mixed>  $context
+     * @return array{summary: string, insights: array<int, string>, recommendations: array<int, string>, severity: string}|null
+     */
+    private function topicFacts(array $context): ?array
+    {
+        $insights = [];
+        $recommendations = [];
+        $severity = 'informational';
+        $summary = '';
+
+        $goals = $context['savings_goals'] ?? null;
+        if (is_array($goals) && ! empty($goals['available'])) {
+            $summary = sprintf('Savings goals: %s saved of %s total target.', $this->peso((float) $goals['total_saved']), $this->peso((float) $goals['total_target']));
+            $pace = $goals['monthly_saving_pace'];
+
+            foreach ($goals['goals'] as $goal) {
+                $insights[] = sprintf(
+                    '%s: %s of %s saved (%s%%), %s to go.',
+                    $goal['name'],
+                    $this->peso((float) $goal['saved']),
+                    $this->peso((float) $goal['target']),
+                    $goal['progress_percent'],
+                    $this->peso((float) $goal['remaining'])
+                );
+
+                if (isset($goal['days_left']) && $goal['status'] !== 'reached') {
+                    if ($goal['days_left'] <= 0) {
+                        $severity = 'warning';
+                        $insights[] = sprintf('The %s deadline has passed.', $goal['name']);
+                    } elseif (isset($goal['needed_per_month'])) {
+                        $recommendations[] = sprintf('To finish %s by its deadline, set aside about %s a month.', $goal['name'], $this->peso((float) $goal['needed_per_month']));
+                    }
+                }
+
+                if ($plan = $goal['hypothetical_contribution_plan'] ?? null) {
+                    $insights[] = sprintf(
+                        'If you add %s %s, you would have about %s of %s after %d month(s)%s.',
+                        $this->peso((float) $plan['contribution_amount']),
+                        $plan['contribution_frequency'],
+                        $this->peso((float) $plan['projected_saved']),
+                        $this->peso((float) $goal['target']),
+                        $plan['horizon_months'],
+                        $plan['reaches_target_in_horizon'] ? ' — enough to reach it' : sprintf(' — %s short', $this->peso((float) $plan['shortfall']))
+                    );
+                    if (! $plan['reaches_target_in_horizon'] && $plan['months_needed'] !== null) {
+                        $recommendations[] = sprintf('At that rate %s would take about %s months; a larger or more frequent contribution would shorten it.', $goal['name'], $plan['months_needed']);
+                    }
+                } elseif (isset($goal['estimated_months_to_reach']) && $goal['estimated_months_to_reach']['typical'] !== null) {
+                    $est = $goal['estimated_months_to_reach'];
+                    $insights[] = sprintf(
+                        'At your recent pace %s could take about %s months (range %s to %s).',
+                        $goal['name'],
+                        $est['typical'],
+                        $est['fastest'] ?? 'n/a',
+                        $est['slowest'] ?? 'not reachable'
+                    );
+                }
+            }
+
+            if ((float) $pace['typical'] <= 0 && ! str_contains(implode(' ', $insights), 'contribution')) {
+                $severity = 'warning';
+                $insights[] = 'Your recorded net cash flow is not positive, so these goals will not grow from your current pattern.';
+                $recommendations[] = 'Trim spending or raise income first, then set a fixed monthly amount for your goal.';
+            }
+        }
+
+        $week = $context['weekly_summary'] ?? null;
+        if (is_array($week)) {
+            $summary = trim($summary.sprintf(
+                ' Last 7 days (%s to %s): spent %s, average %s a day.',
+                $week['period']['start'],
+                $week['period']['end'],
+                $this->peso((float) $week['expenses']),
+                $this->peso((float) $week['average_daily_spend'])
+            ));
+            if ($week['busiest_day'] !== null) {
+                $insights[] = sprintf('Your busiest day was %s (%s).', $week['busiest_day']['label'], $this->peso((float) $week['busiest_day']['spent']));
+            }
+            if ($week['top_categories'] !== []) {
+                $top = $week['top_categories'][0];
+                $insights[] = sprintf('%s led the week at %s (%s%% of spending).', $top['name'], $this->peso((float) $top['spent']), $top['share_percent']);
+            }
+            $change = $week['previous_week']['change_percent'];
+            if ($change !== null) {
+                $insights[] = sprintf('Spending is %s %s%% compared with the previous 7 days.', $change >= 0 ? 'up' : 'down', abs($change));
+                if ($change > 20) {
+                    $severity = 'warning';
+                    $recommendations[] = 'Spending jumped this week; check which days or categories drove it.';
+                } elseif ($change < -10) {
+                    $recommendations[] = 'Spending eased this week; consider moving the difference toward a goal.';
+                }
+            }
+            if ((float) $week['expenses'] <= 0) {
+                $insights[] = 'No expenses were recorded in the last 7 days.';
+            }
+        }
+
+        if ($insights === []) {
+            return null;
+        }
+
+        return ['summary' => $summary, 'insights' => $insights, 'recommendations' => $recommendations, 'severity' => $severity];
     }
 
     private function peso(float $amount): string
