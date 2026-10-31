@@ -1,6 +1,4 @@
-
 @extends('layouts.app')
-
 @section('content')
 @php
     $allTransactions = $transactions ?? collect();
@@ -16,10 +14,6 @@
     {{-- Page heading --}}
     <div class="sw-page-heading">
         <div>
-            <div class="sw-eyebrow">
-                <span class="sw-eyebrow-dot"></span>
-                YOUR FINANCES
-            </div>
             <h1>Transactions</h1>
             <p>Track your money, understand your habits, and stay in control.</p>
         </div>
@@ -426,35 +420,27 @@
         --sw-surface: #fff;
     }
 
-    /* Page uses the background inherited from layouts.app */
+    /* Page uses the background inherited from layouts.app.
+       Sizing follows the Categories page (--u scale). */
     .sw-page {
+        --u: max(min(1vw, 1.547vh), 5px);
+        --cat-green: #3b4a3c;
+        --cat-ink: #47564a;
         color: var(--sw-ink);
-        padding: 26px 28px 36px;
+        padding: calc(var(--u) * 1.7) 0 calc(var(--u) * 3.5) 0;
         background: transparent;
         min-height: 100%;
-        font-family: inherit;
+        font-family: 'Inter', sans-serif;
     }
 
     .sw-page-heading {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 20px;
-        margin-bottom: 22px;
+        margin-bottom: calc(var(--u) * 1.6);
     }
 
-    .sw-eyebrow {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        margin-bottom: 7px;
-        color: var(--sw-green);
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: 1.6px;
-    }
-
-    .sw-eyebrow-dot,
     .sw-status-dot,
     .sw-live-badge span {
         display: inline-block;
@@ -463,20 +449,28 @@
         border-radius: 50%;
     }
 
-    .sw-eyebrow-dot,
     .green-dot,
     .sw-live-badge span {
         background: #28a879;
     }
 
+    /* Title: same serif + size as Categories */
     .sw-page-heading h1 {
         margin: 0;
-        font-size: clamp(25px, 3vw, 31px);
-        font-weight: 750;
-        letter-spacing: -1px;
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 600;
+        font-size: calc(var(--u) * 2.65);
+        line-height: 1.05;
+        letter-spacing: 0;
+        color: var(--cat-green);
     }
 
-    .sw-page-heading p,
+    .sw-page-heading p {
+        margin: calc(var(--u) * .4) 0 0;
+        color: var(--cat-ink);
+        font-size: calc(var(--u) * 1.01);
+    }
+
     .sw-panel-heading p,
     .sw-history-heading p {
         margin: 6px 0 0;
@@ -498,18 +492,34 @@
         transition: .2s ease;
     }
 
+    /* Primary button: same look as "Add Category" */
     .sw-primary-btn {
+        height: calc(var(--u) * 2.65);
+        padding: 0 calc(var(--u) * 1.56);
+        gap: calc(var(--u) * 1.1);
         color: #fff;
-        background: var(--sw-green);
-        border: 1px solid var(--sw-green);
-        box-shadow: 0 4px 10px #176b5018;
+        background: #a0af8d;
+        border: none;
+        border-radius: calc(var(--u) * .7);
+        font-size: calc(var(--u) * 1.09);
+        font-weight: 500;
+        white-space: nowrap;
+        box-shadow: 0 calc(var(--u) * .27) calc(var(--u) * .47) rgba(59, 74, 60, .28);
+    }
+
+    .sw-primary-btn i {
+        font-size: calc(var(--u) * 1.4);
     }
 
     .sw-primary-btn:hover {
         color: #fff;
-        background: var(--sw-green-dark);
-        border-color: var(--sw-green-dark);
-        transform: translateY(-1px);
+        background: #344D3D;
+        transform: translateY(-.15rem);
+    }
+
+    .sw-primary-btn:active {
+        transform: none;
+        box-shadow: none;
     }
 
     .sw-secondary-btn {
@@ -624,12 +634,15 @@
         margin-bottom: 17px;
     }
 
+    /* Card headings: serif like Categories / Reports */
     .sw-panel-heading h2,
     .sw-history-heading h2 {
         margin: 0;
-        font-size: 15px;
-        font-weight: 750;
-        letter-spacing: -.2px;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: calc(var(--u) * 1.5);
+        font-weight: 600;
+        letter-spacing: 0;
+        color: var(--cat-green);
     }
 
     .sw-panel-heading p,
@@ -1206,10 +1219,6 @@
     }
 
     @media (min-width: 1500px) {
-        .sw-page {
-            padding: 30px 36px 42px;
-        }
-
         .sw-summary-card {
             padding: 20px 22px;
         }
@@ -1217,7 +1226,7 @@
 
     @media (max-width: 1000px) {
         .sw-page {
-            padding: 22px 18px 30px;
+            padding: 22px 0 30px;
         }
 
         .sw-overview-grid {
@@ -1260,8 +1269,19 @@
             align-items: flex-start;
         }
 
+        .sw-page-heading h1 {
+            font-size: 30px;
+        }
+
+        .sw-page-heading p {
+            font-size: 13px;
+        }
+
         .sw-page-heading .sw-primary-btn {
             flex-shrink: 0;
+            height: 38px;
+            padding: 0 16px;
+            font-size: 13px;
         }
 
         .sw-filter-bar {
@@ -1314,7 +1334,7 @@
 
     @media (max-width: 420px) {
         .sw-page {
-            padding: 17px 11px 25px;
+            padding: 17px 0 25px;
         }
 
         .sw-page-heading {
@@ -1342,6 +1362,29 @@
 
         .sw-count-badge {
             font-size: 9px;
+        }
+    }
+
+    /* ===== Bigger content (same layout, readable size like Categories) ===== */
+    .sw-summary-grid,
+    .sw-overview-grid,
+    .sw-history-panel {
+        zoom: 1.3;
+    }
+
+    @media (max-width: 1000px) {
+        .sw-summary-grid,
+        .sw-overview-grid,
+        .sw-history-panel {
+            zoom: 1.12;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .sw-summary-grid,
+        .sw-overview-grid,
+        .sw-history-panel {
+            zoom: 1;
         }
     }
 </style>
