@@ -699,6 +699,7 @@
             * { animation: none !important; transition: none !important; }
         }
     </style>
+    @include('layouts.partials.motion-styles')
     @include('layouts.partials.theme-styles')
 </head>
 
@@ -1303,6 +1304,7 @@
             if (GOPEN) setGoalsOpen(true);
         })();
     </script>
+    @include('layouts.partials.motion')
     @include('layouts.partials.ai-companion')
 </body>
 
