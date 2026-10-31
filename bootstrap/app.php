@@ -4,6 +4,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\SessionCookieProbe;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust Render's reverse proxy so Laravel detects HTTPS correctly.
         $middleware->trustProxies(at: '*');
+        $middleware->prependToGroup('web', SessionCookieProbe::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
