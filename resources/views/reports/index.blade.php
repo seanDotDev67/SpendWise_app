@@ -1,20 +1,24 @@
 @extends('layouts.app')
-
 @section('title', 'Reports')
 
 @push('styles')
 <style>
+    /* Sizing follows the Categories page (--u scale) */
     .sw-reports {
+        --u: max(min(1vw, 1.547vh), 5px);
         --report-ink: #2F4A3A;
         --report-muted: #78847d;
         --report-border: rgba(47, 74, 58, .12);
+        --cat-green: #3b4a3c;
+        --cat-ink: #47564a;
         color: var(--report-ink);
-        padding: 18px 8px 28px;
+        padding: calc(var(--u) * 1.7) 0 calc(var(--u) * 3.5) 0;
     }
 
+    /* AI panel widened (292px -> 350px) so it isn't cramped after zoom */
     .reports-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 292px;
+        grid-template-columns: minmax(0, 1fr) 350px;
         align-items: start;
         gap: 16px;
     }
@@ -26,19 +30,27 @@
         justify-content: space-between;
         gap: 12px;
     }
-    .report-heading { margin-bottom: 16px; }
-    .report-eyebrow {
-        color: #66815d;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 1.4px;
+    .report-heading {
+        align-items: flex-start;
+        margin-bottom: calc(var(--u) * 1.6);
     }
+
+    /* Title: same serif + size as Categories */
     .report-heading h1 {
-        margin: 2px 0 2px;
-        font-size: clamp(25px, 3vw, 32px);
-        line-height: 1.1;
+        margin: 0;
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 600;
+        font-size: calc(var(--u) * 2.65);
+        line-height: 1.05;
+        letter-spacing: 0;
+        color: var(--cat-green);
     }
-    .report-heading p, .report-card-subtitle {
+    .report-heading p {
+        margin: calc(var(--u) * .4) 0 0;
+        color: var(--cat-ink);
+        font-size: calc(var(--u) * 1.01);
+    }
+    .report-card-subtitle {
         margin: 0;
         color: var(--report-muted);
         font-size: 11px;
@@ -126,8 +138,10 @@
     .report-card h2 {
         margin: 0;
         font-family: 'Cormorant Garamond', serif;
-        font-size: 18px;
-        font-weight: 700;
+        font-size: calc(var(--u) * 1.5);
+        font-weight: 600;
+        letter-spacing: 0;
+        color: var(--cat-green);
     }
     .report-card-subtitle { margin-top: 2px; }
     .report-chart-grid {
@@ -327,7 +341,7 @@
         background: #2f704f;
         color: #fff;
     }
-    .report-ai-title h2 { margin: 0; font-size: 13px; font-weight: 700; }
+    .report-ai-title h2 { margin: 0; font-size: 13px; font-weight: 700; font-family: inherit; color: var(--report-ink); }
     .report-ai-title p { margin: 2px 0 0; color: var(--report-muted); font-size: 9px; }
     .report-ai-collapse {
         display: none;
@@ -411,12 +425,36 @@
     @media (max-width: 760px) {
         .sw-reports { padding-inline: 0; }
         .report-heading { align-items: flex-start; flex-direction: column; }
+        .report-heading h1 { font-size: 30px; }
+        .report-heading p { font-size: 13px; }
         .report-date-form { width: 100%; }
         .report-date-form label { flex: 1; }
         .report-date-form input { width: 100%; }
         .report-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .report-chart-grid { grid-template-columns: minmax(0, 1fr); }
         .report-category-chart { justify-content: flex-start; }
+    }
+
+    /* ===== Bigger content (same layout, readable size like Categories) ===== */
+    .report-summary-grid,
+    .report-chart-grid {
+        zoom: 1.3;
+    }
+
+    .report-ai-panel {
+        zoom: 1.2;
+    }
+
+    @media (max-width: 1199.98px) {
+        .report-summary-grid,
+        .report-chart-grid { zoom: 1.15; }
+        .report-ai-panel { zoom: 1.1; }
+    }
+
+    @media (max-width: 760px) {
+        .report-summary-grid,
+        .report-chart-grid,
+        .report-ai-panel { zoom: 1; }
     }
 </style>
 @endpush
@@ -427,8 +465,7 @@
         <main class="report-main">
             <div class="report-heading">
                 <div>
-                    <div class="report-eyebrow"><i class="bi bi-bar-chart-line-fill" aria-hidden="true"></i> FINANCIAL REPORTS</div>
-                    <h1 class="serif fw-semibold">Reports</h1>
+                    <h1>Reports</h1>
                     <p>Understand your income, spending, and cash flow.</p>
                 </div>
                 <form class="report-date-form" method="GET" action="{{ route('reports.index') }}">
