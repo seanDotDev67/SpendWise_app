@@ -44,7 +44,7 @@ RUN apt-get update && apt-get install -y \
         zip \
         gd \
         opcache \
-    && a2enmod rewrite headers \
+    && a2enmod rewrite headers deflate \
     && sed -i 's/Listen 80/Listen 10000/' /etc/apache2/ports.conf \
     && rm -rf /var/lib/apt/lists/*
 
@@ -69,6 +69,9 @@ COPY --from=frontend /app/public/build ./public/build
 
 # Configure Apache
 COPY docker/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/zz-opcache.ini
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 # Prepare Laravel directories and permissions
 RUN mkdir -p storage/framework/cache/data \
@@ -83,4 +86,5 @@ RUN mkdir -p storage/framework/cache/data \
 
 EXPOSE 10000
 
+ENTRYPOINT ["entrypoint.sh"]
 CMD ["apache2-foreground"]

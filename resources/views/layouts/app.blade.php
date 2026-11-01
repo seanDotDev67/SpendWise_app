@@ -231,6 +231,7 @@
 </div>
 @endif
 
+@include('layouts.partials.skeleton')
 @include('layouts.partials.motion')
 @include('layouts.partials.ai-companion')
 @include('layouts.partials.footer')
