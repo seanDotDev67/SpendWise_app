@@ -101,7 +101,7 @@ class AssistantGoalsAndWeeklyContextTest extends TestCase
         $service = app(FinancialInsightService::class);
 
         $plan = $service->build($this->context($user, 'if i added 100 every month for my laptop goal can i achieve it in the next year?'), 'laptop', 'Not quite.');
-        $this->assertSame(['comparison'], array_column($plan['charts'], 'type'));
+        $this->assertSame(['comparison', 'line'], array_column($plan['charts'], 'type'));
         $this->assertSame('simulation', $plan['charts'][0]['kind']);
         $this->assertSame([200.0, 1400.0, 1500.0], $plan['charts'][0]['datasets'][0]['data']);
         $this->assertStringContainsString('short', implode(' ', $plan['insights']));

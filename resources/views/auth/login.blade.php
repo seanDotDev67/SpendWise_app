@@ -375,7 +375,7 @@
 
         /* ============ MOBILE / TABLET ============ */
         @media (max-width: 991px) {
-            :root { --u: 3.1vw; }
+            :root { --u: max(3.1vw, min(4vw, 15.5px)); }
             .stage { height: auto; min-height: 100vh; }
             .layer-left, .layer-right, .decor-left, .decor-right, .wave-line, .brand-content { display: none; }
             .form-area { position: relative; inset: auto; left: auto; right: auto; width: 100%; padding: 3rem 1.5rem; }

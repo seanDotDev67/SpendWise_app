@@ -761,6 +761,7 @@
                         </div>
                     </div>
                 </section>
+            </div>
             </main>
 
             @php
@@ -835,7 +836,6 @@
             </aside>
         </div>
     </div>
-</div>
 @endsection
 
 @push('scripts')
