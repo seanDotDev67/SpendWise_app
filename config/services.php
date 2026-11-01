@@ -63,6 +63,12 @@ return [
         'temperature' => (float) env('OLLAMA_TEMPERATURE', 0.3),
     ],
 
+    'supabase' => [
+        'url' => rtrim((string) env('SUPABASE_URL', ''), '/'),
+        'service_key' => env('SUPABASE_SERVICE_ROLE_KEY'),
+        'bucket' => env('SUPABASE_BUCKET', 'profile-photos'),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
