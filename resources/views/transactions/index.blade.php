@@ -125,11 +125,19 @@
                        aria-label="Contactless"></i>
                 </div>
 
-                <div class="sw-card-number" aria-label="Decorative card number">
-                    <span>••••</span>
-                    <span>••••</span>
-                    <span>••••</span>
-                    <span>••••</span>
+                @php $cardGroups = str_split(auth()->user()->cardNumber(), 4); @endphp
+                <div class="sw-card-number-row">
+                    <div class="sw-card-number" id="cardNumber" aria-label="Card number"
+                         data-groups="{{ json_encode($cardGroups) }}">
+                        <span>{{ $cardGroups[0] }}</span>
+                        <span>••••</span>
+                        <span>••••</span>
+                        <span>••••</span>
+                    </div>
+                    <button type="button" class="sw-eye-btn" id="toggleCardNumber"
+                            aria-label="Show card number" title="Show or hide card number">
+                        <i class="bi bi-eye" id="cardNumberEye"></i>
+                    </button>
                 </div>
 
                 <div class="sw-card-balance-label">AVAILABLE BALANCE</div>
@@ -784,6 +792,19 @@
         letter-spacing: 2px;
     }
 
+    .sw-card-number-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .sw-card-number-row .sw-card-number {
+        margin-top: 0;
+        font-variant-numeric: tabular-nums;
+    }
+
     .sw-card-balance-label {
         margin-top: 17px;
         color: #c0dfd0;
@@ -1381,6 +1402,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 'aria-label',
                 balanceHidden ? 'Show balance' : 'Hide balance'
             );
+        });
+    }
+
+    // Toggle card number: first group always visible, the rest masked until revealed.
+    const cardNumber = document.getElementById('cardNumber');
+    const toggleCardNumber = document.getElementById('toggleCardNumber');
+    const cardNumberEye = document.getElementById('cardNumberEye');
+
+    if (cardNumber && toggleCardNumber && cardNumberEye) {
+        const groups = JSON.parse(cardNumber.dataset.groups || '[]');
+        let numberShown = false;
+
+        toggleCardNumber.addEventListener('click', function () {
+            numberShown = !numberShown;
+
+            cardNumber.querySelectorAll('span').forEach(function (span, i) {
+                span.textContent = (i === 0 || numberShown) ? (groups[i] || '') : '••••';
+            });
+
+            cardNumberEye.className = numberShown ? 'bi bi-eye-slash' : 'bi bi-eye';
+            toggleCardNumber.setAttribute('aria-label', numberShown ? 'Hide card number' : 'Show card number');
         });
     }
 
