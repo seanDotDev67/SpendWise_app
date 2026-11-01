@@ -13,9 +13,11 @@
     }
     .profile-avatar {
         display: grid; width: 62px; height: 62px; flex: 0 0 62px; place-items: center;
-        border-radius: 50%; background: var(--sw-dark); color: #fff;
+        border-radius: 50%; background: var(--sw-dark); color: #fff; overflow: hidden; aspect-ratio: 1 / 1;
+        grid-template: minmax(0, 1fr) / minmax(0, 1fr); min-width: 0;
         font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600;
     }
+    .profile-avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
     .profile-eyebrow { margin-bottom: 3px; color: #71806C; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
     .profile-title { margin: 0; color: var(--sw-dark); font-size: clamp(1.8rem, 3vw, 2.35rem); line-height: 1; }
     .profile-subtitle { margin: 7px 0 0; color: #6D756B; font-size: 13px; }

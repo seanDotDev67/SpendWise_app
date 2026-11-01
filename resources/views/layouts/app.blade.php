@@ -111,7 +111,7 @@
         .sw-sr-item small { color: #7b8869; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .sw-sr-item:hover, .sw-sr-item.is-active { background: rgba(127, 148, 104, .18); color: var(--sw-dark); }
         .sw-sr-empty { padding: 14px 10px; font-size: 14px; color: #7b8869; }
-        .sw-avatar { width: 40px; height: 40px; border-radius: 50%; background: #D96B7A; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500; }
+        .sw-avatar { width: 40px; height: 40px; flex: 0 0 40px; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 50%; background: #D96B7A; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 500; }
         .sw-profile-link { color: inherit; text-decoration: none; border-radius: 999px; }
         .sw-profile-link:hover { color: var(--sw-dark); }
         .sw-profile-link:focus-visible { outline: 3px solid rgba(47, 74, 58, .45); outline-offset: 4px; }
