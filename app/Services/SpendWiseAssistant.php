@@ -13,7 +13,8 @@ class SpendWiseAssistant
 
     public function __construct(
         private readonly AssistantProvider $provider,
-        private readonly AssistantFinancialContext $financialContext
+        private readonly AssistantFinancialContext $financialContext,
+        private readonly AssistantResponseGuard $guard
     ) {}
 
     public function isConfigured(): bool
@@ -37,7 +38,9 @@ class SpendWiseAssistant
             $endDate
         );
 
-        return $this->provider->respond($question, $history, $context, $page);
+        $answer = $this->provider->respond($question, $history, $context, $page);
+
+        return $answer === null || $context === null ? $answer : $this->guard->guardGoalAnswer($answer, $context);
     }
 
     /**
