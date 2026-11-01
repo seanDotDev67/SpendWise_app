@@ -18,7 +18,7 @@
                 </div>
 
                 <div class="modal-body">
-                    @if ($errors->any())
+                    @if ($errors->any() && ! old('_edit_id'))
                         <div class="alert alert-danger">
                             <strong>Please check your input.</strong>
                             <ul class="mb-0 mt-2">
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.body.appendChild(addModal);
 
-    @if ($errors->any())
+    @if ($errors->any() && ! old('_edit_id'))
         if (window.bootstrap) {
             bootstrap.Modal.getOrCreateInstance(addModal).show();
         }

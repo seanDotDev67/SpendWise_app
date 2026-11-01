@@ -321,6 +321,20 @@
                     </div>
 
                     <div class="sw-transaction-actions">
+                        <button type="button" class="sw-icon-action sw-edit-transaction"
+                                title="Edit transaction"
+                                aria-label="Edit transaction"
+                                data-id="{{ $transaction->id }}"
+                                data-type="{{ $type }}"
+                                data-amount="{{ number_format((float) $transaction->amount, 2, '.', '') }}"
+                                data-category-id="{{ $transaction->category_id }}"
+                                data-category-name="{{ $categoryName }}"
+                                data-description="{{ $transaction->description }}"
+                                data-date="{{ $dateValue ? \Carbon\Carbon::parse($dateValue)->format('Y-m-d') : '' }}"
+                                data-payment-method="{{ $transaction->payment_method }}"
+                                data-notes="{{ $transaction->notes }}">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
                         <button type="button" class="sw-icon-action"
                                 title="View transaction"
                                 aria-label="View transaction details"
@@ -414,6 +428,7 @@
 </div>
 
 @include('transactions.partials.add-modal')
+@include('transactions.partials.edit-modal')
 
 <style>
     :root {
