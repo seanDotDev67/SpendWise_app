@@ -15,5 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // An idle session that expired makes the next POST fail CSRF; send the user back to sign in.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, \Illuminate\Http\Request $request) {
+            if ($e->getStatusCode() !== 419) {
+                return null;
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Your session has expired. Please sign in again.'], 419);
+            }
+
+            return redirect()->route('login')->with('status', 'Your session expired due to inactivity. Please sign in again.');
+        });
     })->create();

@@ -23,6 +23,9 @@ class SessionCookieTest extends TestCase
         $this->app['env'] = 'production';
 
         $this->post('/login', ['email' => 'a@b.test', 'password' => 'x'])
+            ->assertRedirect(route('login'));
+
+        $this->postJson('/login', ['email' => 'a@b.test', 'password' => 'x'])
             ->assertStatus(419);
     }
 

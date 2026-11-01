@@ -473,7 +473,7 @@
                 </div>
 
                 <div class="remember">
-                    <input type="checkbox" name="remember" id="remember">
+                    <input type="checkbox" name="remember" id="remember" value="1" @checked(old('remember'))>
                     <label for="remember">Remember me</label>
                 </div>
 
