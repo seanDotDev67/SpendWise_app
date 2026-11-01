@@ -567,7 +567,7 @@
         /* ============ MOBILE / TABLET ============ */
         @media (max-width: 991px) {
             :root {
-                --u: 3.1vw;
+                --u: max(3.1vw, min(4vw, 15.5px));
             }
 
             .stage {
