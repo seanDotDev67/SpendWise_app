@@ -199,7 +199,7 @@
         .back-link:focus-visible, .link-btn:focus-visible, .btn-main:focus-visible {
             outline: 3px solid rgba(59,74,60,.35); outline-offset: 2px; border-radius: 8px;
         }
-        @media (max-width: 991px) { :root { --u: 3.1vw; } .form-wrap { max-width: 440px; } }
+        @media (max-width: 991px) { :root { --u: max(3.1vw, min(4vw, 15.5px)); } .form-wrap { max-width: 440px; } }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
     </style>
 </head>
@@ -231,5 +231,6 @@
         });
     });
 </script>
+@include('layouts.partials.submit-guard')
 </body>
 </html>                                            

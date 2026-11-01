@@ -206,7 +206,9 @@
         .logout-btn:hover { background: rgba(255, 255, 255, .08); }
 
         /* ============ MAIN / TOP BAR (same look as the dashboard) ============ */
-        .main { flex: 1; min-width: 0; padding: 0 2rem 3.5rem 1.7rem; }
+        .main { flex: 1; min-width: 0; padding: 0 2rem 3.5rem 1.7rem; display: flex; flex-direction: column; }
+        .main > .body { flex: 1 0 auto; }
+        .main > .sw-footer { flex-shrink: 0; }
 
         .top {
             display: flex;
@@ -630,7 +632,7 @@
             html { font-size: 13px; }
             .app { flex-direction: column; background: linear-gradient(180deg, var(--cream), var(--beige)); }
 
-            .side { position: static; height: auto; width: auto; border-radius: 0 0 2.4rem 2.4rem; }
+            .side { position: static; height: auto; width: auto; align-self: stretch; min-width: 0; border-radius: 0 0 2.4rem 2.4rem; }
             .side-head { height: 6rem; }
             .side nav { margin-top: 0; display: flex; overflow-x: auto; padding: .6rem 1rem; }
             .side nav a { flex: none; height: 3.8rem; padding: 0 1.6rem; gap: 1rem; border-radius: 99px; }
@@ -739,6 +741,7 @@
                     <div class="panel" id="panel"></div>
                 </div>
             </div>
+            @include('layouts.partials.site-footer')
         </div>
     </div>
 
@@ -979,6 +982,8 @@
             renderAll();
         })();
     </script>
+    @include('layouts.partials.skeleton')
+    @include('layouts.partials.submit-guard')
     @include('layouts.partials.motion')
     @include('layouts.partials.ai-companion')
 </body>

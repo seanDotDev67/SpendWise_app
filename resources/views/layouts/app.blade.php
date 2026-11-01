@@ -32,8 +32,11 @@
 
         body { min-width: 320px; background: linear-gradient(90deg, var(--sw-cream) 0, var(--sw-cream) var(--sw-side-w), var(--sw-bg) 100%) fixed; animation: sw-fade .4s ease-out; color: var(--sw-dark); font-family: 'Inter', sans-serif; }
         .serif { font-family: 'Cormorant Garamond', serif; }
-        .sw-app { min-height: 100vh; }
-        .sw-main { min-width: 0; }
+        .sw-app { min-height: 100vh; min-height: 100dvh; }
+        /* Sticky footer: the main column fills the viewport and the page content grows, pushing the footer down. */
+        .sw-main { min-width: 0; display: flex; flex-direction: column; }
+        .sw-main > .sw-page-content { flex: 1 0 auto; min-width: 0; }
+        .sw-main > .sw-footer { flex-shrink: 0; }
         @media (min-width: 992px) {
             .sw-app > .sw-main {
                 flex: 0 0 calc(100% - var(--sw-side-w));
@@ -224,6 +227,7 @@
 
                     @yield('content')
                 </section>
+                @include('layouts.partials.site-footer')
             </main>
         </div>
 @if ($fit ?? false)
@@ -232,6 +236,7 @@
 @endif
 
 @include('layouts.partials.skeleton')
+@include('layouts.partials.submit-guard')
 @include('layouts.partials.motion')
 @include('layouts.partials.ai-companion')
 @include('layouts.partials.footer')

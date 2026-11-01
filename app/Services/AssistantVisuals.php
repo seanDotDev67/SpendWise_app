@@ -41,7 +41,7 @@ class AssistantVisuals
         $week = $context['weekly_summary'] ?? null;
         $topicVisuals = [];
         if (is_array($goals) && ! empty($goals['available'])) {
-            array_push($topicVisuals, ...$this->goalVisuals($goals));
+            array_push($topicVisuals, ...$this->goalVisuals($goals, $question));
         }
         if (is_array($week)) {
             array_push($topicVisuals, ...$this->weekVisuals($week));
@@ -89,24 +89,49 @@ class AssistantVisuals
      * @param  array<string, mixed>  $goals
      * @return array<int, array<string, mixed>>
      */
-    private function goalVisuals(array $goals): array
+    private function goalVisuals(array $goals, string $question = ''): array
     {
         $items = array_slice($goals['goals'], 0, 6);
         $visuals = [];
 
         foreach ($items as $goal) {
             $plan = $goal['hypothetical_contribution_plan'] ?? null;
-            if (is_array($plan)) {
+            if (is_array($plan) && $plan['status'] === 'in_progress') {
                 $visuals[] = [
                     'type' => 'comparison',
                     'title' => $goal['name'].': saved vs projected vs target',
-                    'labels' => ['Saved now', 'Projected', 'Target'],
+                    'labels' => ['Saved now', 'Projected (simulated)', 'Target'],
                     'datasets' => [['label' => 'Amount', 'data' => [
                         (float) $goal['saved'], (float) $plan['projected_saved'], (float) $goal['target'],
                     ], 'colors' => ['#A8B1A9', '#D9A441', '#2F4A3A']]],
                     'kind' => 'simulation',
-                    'note' => 'Hypothetical: assumes you add '.number_format((float) $plan['contribution_amount'], 2).' '.$plan['contribution_frequency'].' for '.$plan['horizon_months'].' month(s).',
+                    'note' => 'Simulated: assumes you add '.number_format((float) $plan['contribution_amount'], 2).' '.$plan['contribution_frequency'].' for '.$plan['horizon_months'].' month(s). Only "Saved now" is real.',
                 ];
+
+                if (count($plan['timeline'] ?? []) >= 2) {
+                    $visuals[] = [
+                        'type' => 'line',
+                        'title' => $goal['name'].': projected completion timeline',
+                        'labels' => array_map(fn (array $p): string => $p['month'] === 0 ? 'Now' : 'Month '.$p['month'], $plan['timeline']),
+                        'datasets' => [
+                            ['label' => 'Projected savings (simulated)', 'color' => '#D9A441', 'data' => array_map(fn (array $p): float => (float) $p['projected_saved'], $plan['timeline'])],
+                            ['label' => 'Target', 'color' => '#2F4A3A', 'data' => array_map(fn (array $p): float => (float) $goal['target'], $plan['timeline'])],
+                        ],
+                        'kind' => 'simulation',
+                        'note' => 'Projected from your recorded savings; the line is not saved money.',
+                    ];
+                }
+
+                if (count($plan['scenarios'] ?? []) >= 2 && preg_match('/\b(?:compare|comparison|scenarios?|options?|alternatives?|different|instead|versus|vs)\b/i', $question) === 1) {
+                    $visuals[] = [
+                        'type' => 'bar',
+                        'title' => $goal['name'].': months to finish by contribution',
+                        'labels' => array_map(fn (array $s): string => '₱'.number_format((float) $s['contribution_amount'], 2).' '.$plan['contribution_frequency'], $plan['scenarios']),
+                        'datasets' => [['label' => 'Months (simulated)', 'color' => '#D9A441', 'data' => array_map(fn (array $s): float => (float) $s['months_needed'], $plan['scenarios'])]],
+                        'kind' => 'simulation',
+                        'note' => 'Scenario comparison; every amount here is hypothetical.',
+                    ];
+                }
             }
         }
 
