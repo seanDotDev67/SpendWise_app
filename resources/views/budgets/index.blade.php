@@ -41,7 +41,7 @@
     $uemail = auth()->check() ? auth()->user()->email : 'sean.lapaz@example.com';
     $initials = collect(preg_split('/\s+/', trim($uname)))->filter()->map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('');
     $profilePhotoPath = auth()->user()?->profile_photo_path;
-    $profilePhotoUrl = $profilePhotoPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($profilePhotoPath) : null;
+    $profilePhotoUrl = $profilePhotoPath ? auth()->user()->profilePhotoUrl() : null;
 
     $transactionsUrl = Route::has('transactions.page') ? route('transactions.page') : $r('transactions.index');
     $profileUrl = $r('profile.edit');

@@ -22,7 +22,7 @@
         <a href="{{ route('profile.edit') }}" class="sw-profile-link d-flex align-items-center gap-3" aria-label="Open profile settings">
             <div class="sw-avatar">
                 @if ($user->profile_photo_path)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($user->profile_photo_path) }}" alt="">
+                    <img src="{{ $user->profilePhotoUrl() }}" alt="">
                 @else
                     {{ $initials }}
                 @endif

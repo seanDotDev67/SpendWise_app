@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\ProfilePhoto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -62,17 +64,35 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-        $path = $validated['photo']->storePublicly('profile-photos/'.$user->id, 'public');
-        if (! is_string($path)) {
+        $file = $validated['photo'];
+        $contents = $file->get();
+        if ($contents === false || $contents === '') {
             throw new RuntimeException('The profile photo could not be saved.');
         }
 
+        ProfilePhoto::updateOrCreate(
+            ['user_id' => $user->id],
+            ['mime' => $file->getMimeType() ?: 'image/jpeg', 'data' => base64_encode($contents)],
+        );
+
         $oldPath = $user->profile_photo_path;
-        $user->profile_photo_path = $path;
+        $user->profile_photo_path = 'db:'.now()->timestamp;
         $user->save();
         $this->deleteStoredPhoto($oldPath, $user->id);
 
         return Redirect::route('profile.edit')->with('status', 'profile-photo-updated');
+    }
+
+    public function showPhoto(Request $request): Response
+    {
+        $photo = ProfilePhoto::find($request->user()->id);
+        abort_if($photo === null, 404);
+
+        return response(base64_decode($photo->data), 200, [
+            'Content-Type' => $photo->mime,
+            'Cache-Control' => 'private, max-age=31536000',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function deletePhoto(Request $request): RedirectResponse
@@ -81,6 +101,7 @@ class ProfileController extends Controller
         $oldPath = $user->profile_photo_path;
         $user->profile_photo_path = null;
         $user->save();
+        ProfilePhoto::where('user_id', $user->id)->delete();
         $this->deleteStoredPhoto($oldPath, $user->id);
 
         return Redirect::route('profile.edit')->with('status', 'profile-photo-deleted');

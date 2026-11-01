@@ -78,7 +78,6 @@ class ProfileTest extends TestCase
 
     public function test_user_can_upload_replace_and_remove_their_profile_photo(): void
     {
-        Storage::fake('public');
         $user = User::factory()->create();
 
         $this->actingAs($user)
@@ -88,31 +87,55 @@ class ProfileTest extends TestCase
             ->assertRedirect(route('profile.edit'))
             ->assertSessionHas('status', 'profile-photo-updated');
 
-        $firstPath = $user->refresh()->profile_photo_path;
-        $this->assertNotNull($firstPath);
-        Storage::disk('public')->assertExists($firstPath);
+        $this->assertNotNull($user->refresh()->profile_photo_path);
+        $this->assertDatabaseHas('profile_photos', ['user_id' => $user->id]);
 
         $this->get(route('profile.edit'))
             ->assertOk()
-            ->assertSee(Storage::disk('public')->url($firstPath), false);
+            ->assertSee($user->profilePhotoUrl(), false);
+
+        $this->get(route('profile.photo.show'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
 
         $this->post(route('profile.photo.update'), [
             'photo' => $this->fakePng('new-portrait.png'),
         ])->assertRedirect(route('profile.edit'));
-
-        $secondPath = $user->refresh()->profile_photo_path;
-        $this->assertNotSame($firstPath, $secondPath);
-        Storage::disk('public')->assertMissing($firstPath);
-        Storage::disk('public')->assertExists($secondPath);
+        $this->assertSame(1, \App\Models\ProfilePhoto::count());
 
         $this->delete(route('profile.photo.delete'))
             ->assertRedirect(route('profile.edit'))
             ->assertSessionHas('status', 'profile-photo-deleted');
 
         $this->assertNull($user->refresh()->profile_photo_path);
-        Storage::disk('public')->assertMissing($secondPath);
+        $this->assertDatabaseMissing('profile_photos', ['user_id' => $user->id]);
+        $this->get(route('profile.photo.show'))->assertNotFound();
     }
 
+    public function test_profile_photo_survives_logout_and_login(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('profile.photo.update'), ['photo' => $this->fakePng('a.png')]);
+        $this->post('/logout')->assertRedirect();
+        $this->assertGuest();
+        $this->get(route('profile.photo.show'))->assertRedirect(route('login'));
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->assertAuthenticatedAs($user);
+        $this->get(route('profile.photo.show'))->assertOk();
+        $this->get(route('profile.edit'))->assertSee($user->refresh()->profilePhotoUrl(), false);
+    }
+
+    public function test_profile_photo_is_only_served_to_its_owner(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+
+        $this->actingAs($owner)->post(route('profile.photo.update'), ['photo' => $this->fakePng('a.png')]);
+
+        $this->actingAs($other)->get(route('profile.photo.show'))->assertNotFound();
+    }
     public function test_profile_photo_upload_rejects_non_image_files(): void
     {
         Storage::fake('public');

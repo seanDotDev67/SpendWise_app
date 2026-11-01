@@ -102,7 +102,7 @@
 @section('content')
     @php
         $profilePhotoUrl = $user->profile_photo_path
-            ? \Illuminate\Support\Facades\Storage::disk('public')->url($user->profile_photo_path)
+            ? $user->profilePhotoUrl()
             : null;
         $profileInitials = collect(explode(' ', trim($user->name)))
             ->filter()

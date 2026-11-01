@@ -57,6 +57,21 @@ class User extends Authenticatable
      * Decorative 16-digit card number, unique per user. The id is mapped through a bijection
      * (odd multiplier not divisible by 5, modulo 10^14), so two users can never share a number.
      */
+    public function profilePhotoUrl(): ?string
+    {
+        $path = $this->profile_photo_path;
+        if (! $path) {
+            return null;
+        }
+
+        // Photos uploaded before the database storage change still point at the public disk.
+        if (! str_starts_with($path, 'db:')) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+        }
+
+        return route('profile.photo.show', ['v' => substr($path, 3)], false);
+    }
+
     public function cardNumber(): string
     {
         $body = '4'.str_pad((string) (((int) $this->id * 48271938473 + 31415926535) % 100000000000000), 14, '0', STR_PAD_LEFT);
