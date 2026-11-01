@@ -26,6 +26,7 @@ class FinancialInsightService
         }
 
         $parsed = $this->validator->parseModelOutput($modelOutput);
+        $parsed['message'] = $this->guard->guardGoalAnswer($parsed['message'], $context);
         $facts = $this->facts($context);
         $hasBudgets = ! empty($context['budget_status']['available']);
         $hasGoals = ! empty($context['savings_goals']['available']);
@@ -261,6 +262,9 @@ class FinancialInsightService
                         $plan['horizon_months'],
                         $plan['reaches_target_in_horizon'] ? ' — enough to reach it' : sprintf(' — %s short', $this->peso((float) $plan['shortfall']))
                     );
+                    if (($plan['deadline']['status'] ?? null) === 'short') {
+                        $recommendations[] = sprintf('To finish %s by its deadline, add about %s %s (round up to ₱%s).', $goal['name'], $this->peso((float) $plan['deadline']['required_per_period']), $plan['contribution_frequency'], number_format((int) $plan['deadline']['required_per_period_whole_pesos']));
+                    }
                     if (! $plan['reaches_target_in_horizon'] && $plan['months_needed'] !== null) {
                         $recommendations[] = sprintf('At that rate %s would take about %s months; a larger or more frequent contribution would shorten it.', $goal['name'], $plan['months_needed']);
                     }
