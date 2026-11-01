@@ -39,9 +39,11 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
-        'guzzle' => [
-            'verify' => storage_path('cacert/cacert.pem'),
-        ],
+        // Use the local CA bundle only when it exists (Windows dev); otherwise
+        // Guzzle/cURL falls back to the OS trust store (Linux/Render).
+        'guzzle' => is_file(storage_path('cacert/cacert.pem'))
+            ? ['verify' => storage_path('cacert/cacert.pem')]
+            : [],
     ],
 
     'assistant' => [
