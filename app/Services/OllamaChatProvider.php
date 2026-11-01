@@ -192,6 +192,10 @@ class OllamaChatProvider implements StreamingAssistantProvider
             return null;
         }
 
+        if ($financialContext !== null) {
+            $answer = $this->guard->guardGoalAnswer($answer, $financialContext);
+        }
+
         if ($financialContext !== null && $this->guard->hasUnsupportedNumericClaims($answer, $financialContext)) {
             Log::info('Ollama answer contains figures not found in the verified financial context.');
         }
