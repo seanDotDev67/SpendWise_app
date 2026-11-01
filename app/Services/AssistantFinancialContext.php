@@ -9,7 +9,10 @@ use Carbon\Carbon;
 
 class AssistantFinancialContext
 {
-    public function __construct(private readonly ReportDataService $reports) {}
+    public function __construct(
+        private readonly ReportDataService $reports,
+        private readonly SavingsProjectionService $projections
+    ) {}
 
     public function forQuestion(
         User $user,
@@ -324,12 +327,14 @@ class AssistantFinancialContext
         $unit = strtolower($m[2] ?? '') ?: strtolower($m[3] ?? '');
         $unit = ['daily' => 'day', 'weekly' => 'week', 'monthly' => 'month', 'yearly' => 'year'][$unit] ?? $unit;
         $assumed = $unit === '';
-        if ($assumed && preg_match('/\b(?:every|each|per)\s+(day|week|month|year)\b/i', $question, $every) === 1) {
+        if (preg_match('/\b(?:bi-?weekly|fortnightly|every (?:other|2|two) weeks?)\b/i', $question) === 1) {
+            $unit = 'biweek';
+            $assumed = false;
+        } elseif ($assumed && preg_match('/\b(?:every|each|per)\s+(day|week|month|year)\b/i', $question, $every) === 1) {
             $unit = strtolower($every[1]);
             $assumed = false;
         }
         $unit = $unit ?: 'month';
-        $perMonth = $amount * ['day' => 30, 'week' => 52 / 12, 'month' => 1, 'year' => 1 / 12][$unit];
 
         $horizon = 12;
         $words = ['one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5, 'six' => 6, 'seven' => 7,
@@ -345,9 +350,8 @@ class AssistantFinancialContext
 
         return [
             'amount' => $amount,
-            'unit' => 'per '.$unit,
+            'frequency' => $unit,
             'assumed_unit' => $assumed,
-            'per_month' => $perMonth,
             'horizon_months' => min(120, $horizon),
         ];
     }
@@ -429,21 +433,17 @@ class AssistantFinancialContext
             }
 
             if ($plan !== null && ($mentioned->isEmpty() || $mentioned->contains($goal->id))) {
-                $perMonth = $plan['per_month'];
-                $added = round($perMonth * $plan['horizon_months'], 2);
-                $finalSaved = round($saved + $added, 2);
-                $item['hypothetical_contribution_plan'] = [
-                    'is_hypothetical' => true,
-                    'contribution_amount' => $fmt($plan['amount']),
-                    'contribution_frequency' => $plan['unit'],
+                $item['hypothetical_contribution_plan'] = $this->projections->project(
+                    $target,
+                    $saved,
+                    $plan['amount'],
+                    $plan['frequency'],
+                    $today,
+                    $plan['horizon_months'],
+                    $goal->deadline
+                ) + [
                     'frequency_assumed' => $plan['assumed_unit'],
-                    'horizon_months' => $plan['horizon_months'],
-                    'monthly_equivalent' => $fmt(round($perMonth, 2)),
-                    'projected_added' => $fmt($added),
-                    'projected_saved' => $fmt($finalSaved),
-                    'reaches_target_in_horizon' => $finalSaved >= $target,
-                    'shortfall' => $fmt(max(0, round($target - $finalSaved, 2))),
-                    'months_needed' => $remaining <= 0 ? '0.0' : ($perMonth > 0 ? number_format($remaining / $perMonth, 1, '.', '') : null),
+                    'note' => 'Simulated. None of these amounts are saved or recorded; only "saved" and "actual_saved" are real.',
                 ];
             }
 
@@ -458,8 +458,18 @@ class AssistantFinancialContext
             return $item;
         })->values()->all();
 
+        $clarify = [];
+        if ($goals->isEmpty()) {
+            $clarify[] = 'No savings goal is recorded. Ask the user for the target amount and how much they have saved so far (or suggest creating a goal on the Budgets page); do not invent either.';
+        }
+        if ($plan === null && preg_match('/\b(?:can|could|will|would|should)\s+i\b.{0,60}\b(?:buy|afford|get|reach|finish|achieve)\b|\bif i\b/i', $question) === 1) {
+            $clarify[] = 'No contribution amount was stated. Ask how much the user can set aside and how often (weekly, every two weeks or monthly) before giving a projection.';
+        }
+
         return [
             'available' => $goals->isNotEmpty(),
+            'clarification_needed' => $clarify,
+            'data_labels' => 'saved, target, remaining and progress_percent are recorded facts. Everything inside hypothetical_contribution_plan is a simulated projection, not money already saved.',
             'goals' => $items,
             'total_target' => $fmt((float) $goals->sum('target')),
             'total_saved' => $fmt((float) $goals->sum('saved')),
