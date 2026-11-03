@@ -238,6 +238,7 @@
 @include('layouts.partials.skeleton')
 @include('layouts.partials.submit-guard')
 @include('layouts.partials.motion')
+@include('layouts.partials.cursor')
 @include('layouts.partials.ai-companion')
 @include('layouts.partials.footer')
 </body>
