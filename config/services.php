@@ -47,8 +47,9 @@ return [
     ],
 
     'assistant' => [
-        // "ollama" (local, default) or "gemini" (optional, explicit opt-in only).
-        'provider' => env('ASSISTANT_PROVIDER', 'ollama'),
+        // "failover" (default): providers from config/ai.php with automatic failover.
+        // "ollama" or "gemini": legacy single-provider modes with no fallback.
+        'provider' => env('ASSISTANT_PROVIDER', 'failover'),
     ],
 
     'ollama' => [
@@ -61,6 +62,12 @@ return [
         'num_ctx' => (int) env('OLLAMA_NUM_CTX', 4096),
         'num_predict' => (int) env('OLLAMA_NUM_PREDICT', 300),
         'temperature' => (float) env('OLLAMA_TEMPERATURE', 0.3),
+    ],
+
+    'supabase' => [
+        'url' => rtrim((string) env('SUPABASE_URL', ''), '/'),
+        'service_key' => env('SUPABASE_SERVICE_ROLE_KEY'),
+        'bucket' => env('SUPABASE_BUCKET', 'profile-photos'),
     ],
 
     'gemini' => [

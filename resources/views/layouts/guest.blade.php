@@ -32,5 +32,6 @@
             </div>
         </div>
         @include('layouts.partials.submit-guard')
+        @include('layouts.partials.cursor')
     </body>
 </html>

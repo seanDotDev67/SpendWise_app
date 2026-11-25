@@ -64,6 +64,10 @@ class User extends Authenticatable
             return null;
         }
 
+        if (str_starts_with($path, 'supabase:')) {
+            return app(\App\Services\SupabaseStorage::class)->publicUrl(substr($path, 9));
+        }
+
         // Photos uploaded before the database storage change still point at the public disk.
         if (! str_starts_with($path, 'db:')) {
             return \Illuminate\Support\Facades\Storage::disk('public')->url($path);

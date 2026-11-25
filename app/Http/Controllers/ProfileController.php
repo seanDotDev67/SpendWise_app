@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\ProfilePhoto;
+use App\Services\SupabaseStorage;
+use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -70,13 +72,31 @@ class ProfileController extends Controller
             throw new RuntimeException('The profile photo could not be saved.');
         }
 
-        ProfilePhoto::updateOrCreate(
-            ['user_id' => $user->id],
-            ['mime' => $file->getMimeType() ?: 'image/jpeg', 'data' => base64_encode($contents)],
-        );
-
         $oldPath = $user->profile_photo_path;
-        $user->profile_photo_path = 'db:'.now()->timestamp;
+
+        if (SupabaseStorage::configured()) {
+            $mime = $file->getMimeType() ?: 'image/jpeg';
+            $extension = ['image/png' => 'png', 'image/webp' => 'webp'][$mime] ?? 'jpg';
+            $key = $user->id.'/'.Str::uuid().'.'.$extension;
+
+            try {
+                app(SupabaseStorage::class)->upload($key, $contents, $mime);
+            } catch (\Throwable $e) {
+                report($e);
+
+                return back()->withErrors(['photo' => 'The photo could not be uploaded. Please try again.']);
+            }
+
+            $user->profile_photo_path = 'supabase:'.$key;
+            ProfilePhoto::where('user_id', $user->id)->delete();
+        } else {
+            ProfilePhoto::updateOrCreate(
+                ['user_id' => $user->id],
+                ['mime' => $file->getMimeType() ?: 'image/jpeg', 'data' => base64_encode($contents)],
+            );
+            $user->profile_photo_path = 'db:'.now()->timestamp;
+        }
+
         $user->save();
         $this->deleteStoredPhoto($oldPath, $user->id);
 
@@ -109,6 +129,14 @@ class ProfileController extends Controller
 
     private function deleteStoredPhoto(?string $path, int $userId): void
     {
+        if ($path !== null && str_starts_with($path, 'supabase:'.$userId.'/')) {
+            if (! app(SupabaseStorage::class)->delete(substr($path, 9))) {
+                Log::warning('Unable to remove a replaced profile photo.', ['user_id' => $userId]);
+            }
+
+            return;
+        }
+
         if ($path === null || ! str_starts_with($path, 'profile-photos/'.$userId.'/')) {
             return;
         }

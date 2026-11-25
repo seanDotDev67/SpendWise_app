@@ -397,9 +397,13 @@ Then run `php artisan config:clear` and request a reset code for an account emai
 
 Never post database passwords, `APP_KEY`, AI provider API keys, or other secrets in a GitHub issue, pull request, screenshot, or team chat.
 
-### SpendWise AI with a local Ollama model (default)
+### SpendWise AI providers and failover
 
-SpendWise AI runs on a local open-weight model through [Ollama](https://ollama.com). No Gemini key is needed. Totals and trends are calculated in PHP/SQL; the model only explains them. Each teammate installs Ollama and downloads the model once on their own computer. The model is not stored in Git.
+In production, SpendWise AI tries Gemini, then Groq, then OpenRouter, and switches automatically when one is rate-limited or unavailable. Set `GEMINI_API_KEY`, `GROQ_API_KEY` and `OPENROUTER_API_KEY` on the server (providers without a key are skipped). Settings, monitoring, Render deployment and how to add a provider are in [docs/ai-providers.md](docs/ai-providers.md). Local Ollama (below) is used automatically in development.
+
+### SpendWise AI with a local Ollama model (development)
+
+SpendWise AI can run on a local open-weight model through [Ollama](https://ollama.com), with no API key. Totals and trends are calculated in PHP/SQL; the model only explains them. Each teammate installs Ollama and downloads the model once on their own computer. The model is not stored in Git. To use only Ollama, with no cloud fallback, set `ASSISTANT_PROVIDER=ollama`.
 
 **Requirements:** about 4 GB of free disk space, 8 GB RAM recommended, and an internet connection for the one-time download. A GPU is optional; on CPU only, replies take several seconds to a minute.
 

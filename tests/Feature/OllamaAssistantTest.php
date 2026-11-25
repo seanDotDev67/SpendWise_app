@@ -61,9 +61,12 @@ class OllamaAssistantTest extends TestCase
             ->all();
     }
 
-    public function test_ollama_is_the_default_provider_and_gemini_is_not_required(): void
+    public function test_failover_is_the_default_mode_and_ollama_and_gemini_remain_pinnable(): void
     {
-        $this->assertSame('ollama', config('services.assistant.provider'));
+        config(['services.assistant.provider' => 'failover']);
+        $this->assertInstanceOf(\App\Services\Ai\AiProviderManager::class, app(AssistantProvider::class));
+
+        config(['services.assistant.provider' => 'ollama']);
         $this->assertInstanceOf(OllamaChatProvider::class, app(AssistantProvider::class));
 
         config(['services.assistant.provider' => 'gemini']);

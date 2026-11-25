@@ -261,6 +261,8 @@
         .avatar {
             width: 40px;
             height: 40px;
+            flex: 0 0 40px;
+            overflow: hidden;
             border-radius: 50%;
             background: #c2677a;
             color: #fff;
