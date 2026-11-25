@@ -47,8 +47,9 @@ return [
     ],
 
     'assistant' => [
-        // "ollama" (local, default) or "gemini" (optional, explicit opt-in only).
-        'provider' => env('ASSISTANT_PROVIDER', 'ollama'),
+        // "failover" (default): providers from config/ai.php with automatic failover.
+        // "ollama" or "gemini": legacy single-provider modes with no fallback.
+        'provider' => env('ASSISTANT_PROVIDER', 'failover'),
     ],
 
     'ollama' => [

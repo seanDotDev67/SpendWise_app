@@ -148,35 +148,35 @@
                         {{-- Stat cards --}}
                         <div class="row g-3">
                             <div class="col-6 col-lg-3">
-                                <div class="sw-stat beige sw-entrance">
+                                <div class="sw-stat rounded-2xl shadow-sm bg-white border-gray-100 sw-entrance">
                                     <div class="sw-stat-icon" style="background:var(--sw-sidebar)"><i class="bi bi-wallet2"></i></div>
-                                    <div class="fw-medium mt-2">All-time balance</div>
-                                    <div class="sw-stat-value">₱ {{ number_format($balance, 2) }}</div>
-                                    <small style="font-size:10px">Income less expenses to date</small>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">All-time balance</div>
+                                    <div class="sw-stat-value text-2xl font-bold text-gray-800 dark:text-gray-100">₱ {{ number_format($balance, 2) }}</div>
+                                    <small class="text-xs text-gray-500 dark:text-gray-400">Income less expenses to date</small>
                                 </div>
                             </div>
                             <div class="col-6 col-lg-3">
-                                <div class="sw-stat pink selected sw-entrance">
+                                <div class="sw-stat rounded-2xl shadow-sm bg-rose-50 dark:bg-[#3b2a2f] border-rose-100 sw-entrance">
                                     <div class="sw-stat-icon" style="background:var(--sw-pink-dark)"><i class="bi bi-arrow-down"></i></div>
-                                    <div class="fw-medium mt-2">Income this month</div>
-                                    <div class="sw-stat-value">₱ {{ number_format($income, 2) }}</div>
-                                    <small style="font-size:10px">{{ $now->format('F Y') }}</small>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">Income this month</div>
+                                    <div class="sw-stat-value text-2xl font-bold text-gray-800 dark:text-gray-100">₱ {{ number_format($income, 2) }}</div>
+                                    <small class="text-xs text-gray-500 dark:text-gray-400">{{ $now->format('F Y') }}</small>
                                 </div>
                             </div>
                             <div class="col-6 col-lg-3">
-                                <div class="sw-stat pink sw-entrance">
+                                <div class="sw-stat rounded-2xl shadow-sm bg-rose-50 dark:bg-[#3b2a2f] border-rose-100 sw-entrance">
                                     <div class="sw-stat-icon" style="background:var(--sw-pink-dark)"><i class="bi bi-arrow-up"></i></div>
-                                    <div class="fw-medium mt-2">Expenses this month</div>
-                                    <div class="sw-stat-value">₱ {{ number_format($expenses, 2) }}</div>
-                                    <small style="font-size:10px">{{ $now->format('F Y') }}</small>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">Expenses this month</div>
+                                    <div class="sw-stat-value text-2xl font-bold text-gray-800 dark:text-gray-100">₱ {{ number_format($expenses, 2) }}</div>
+                                    <small class="text-xs text-gray-500 dark:text-gray-400">{{ $now->format('F Y') }}</small>
                                 </div>
                             </div>
                             <div class="col-6 col-lg-3">
-                                <div class="sw-stat beige sw-entrance">
+                                <div class="sw-stat rounded-2xl shadow-sm bg-white border-gray-100 sw-entrance">
                                     <div class="sw-stat-icon" style="background:var(--sw-sidebar)"><i class="bi bi-bullseye"></i></div>
-                                    <div class="fw-medium small mt-2">Income spent this month</div>
-                                    <div class="sw-stat-value">{{ $incomeSpentPercentage }}%</div>
-                                    <small style="font-size:10px">{{ $income > 0 ? 'Of recorded income' : 'No income recorded yet' }}</small>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">Income spent this month</div>
+                                    <div class="sw-stat-value text-2xl font-bold text-gray-800 dark:text-gray-100">{{ $incomeSpentPercentage }}%</div>
+                                    <small class="text-xs text-gray-500 dark:text-gray-400">{{ $income > 0 ? 'Of recorded income' : 'No income recorded yet' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -184,7 +184,7 @@
                         {{-- Monthly spending overview and category breakdown --}}
                         <div class="row g-3 mt-1">
                             <div class="col-lg-6">
-                                <div class="sw-card h-100 sw-entrance">
+                                <div class="sw-card rounded-2xl shadow-sm bg-white p-6 h-100 sw-entrance">
                                     <h3 class="serif fw-bold fs-5 mb-0">Spending Overview</h3>
                                     <small class="text-muted" style="font-size:10px">This Month · {{ $now->format('F Y') }}</small>
 
@@ -212,7 +212,7 @@
                             </div>
 
                             <div class="col-lg-6">
-                                <div class="sw-card h-100 sw-entrance">
+                                <div class="sw-card rounded-2xl shadow-sm bg-white h-100 sw-entrance">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <h3 class="serif fw-bold fs-5">Spending by category</h3>
                                         @if (Route::has('categories.index'))
@@ -248,7 +248,7 @@
                         {{-- Bottom row --}}
                         <div class="row g-3 mt-1">
                             <div class="col-lg-5">
-                                <div class="sw-card-beige sw-empty-state h-100 sw-entrance">
+                                <div class="sw-card sw-empty-state rounded-2xl shadow-sm bg-white p-6 h-100 sw-entrance">
                                     <div class="d-flex align-items-center gap-3 mb-3">
                                         <span class="sw-stat-icon" style="background:var(--sw-sidebar)"><i class="bi bi-cash-stack"></i></span>
                                         <div>
@@ -275,7 +275,7 @@
                                 </div>
                             </div>
                             <div class="col-lg-7">
-                                <div class="sw-card-beige sw-coach p-3 h-100 sw-entrance">
+                                <div class="sw-card sw-coach rounded-2xl shadow-sm bg-white p-3 h-100 sw-entrance">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="sw-stat-icon" style="background:var(--sw-dark)"><i class="bi bi-stars"></i></span>
                                         <div class="flex-grow-1 lh-sm">
@@ -347,7 +347,7 @@
                     <aside class="col-xl-3 sw-right ps-xl-4">
 
                         {{-- Calendar --}}
-                        <div class="sw-card sw-calendar-card p-3 mb-3 sw-entrance">
+                        <div class="sw-card sw-calendar-card rounded-2xl shadow-sm bg-white p-3 mb-3 sw-entrance">
                             <div class="text-center text-white rounded py-1" style="background:var(--sw-dark); font-size:9px">{{ $now->format('F Y') }}</div>
                             <div class="sw-cal mt-2">
                                 <span class="fw-medium">{{ $now->format('m') }}</span>
@@ -371,26 +371,26 @@
                         </div>
 
                         {{-- Quick actions --}}
-                        <div class="sw-card mb-3 sw-entrance">
+                        <div class="sw-card rounded-2xl shadow-sm bg-white mb-3 sw-entrance">
                             <h3 class="serif fw-semibold fs-5">Quick Actions</h3>
                             <div class="d-grid gap-2 mt-2">
                                 <button type="button" data-bs-toggle="modal" data-bs-target="#addTransactionModal"
-                                        class="btn btn-sw-dark d-flex align-items-center justify-content-center gap-2">
+                                        class="btn btn-sw-dark d-flex align-items-center justify-content-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                                     <i class="bi bi-plus-lg"></i> Add Transaction
                                 </button>
                                 <a href="{{ Route::has('budgets.index') ? route('budgets.index') : '#' }}"
-                                   class="btn btn-sw-light d-flex align-items-center gap-3 text-start">
+                                   class="btn btn-sw-light d-flex align-items-center gap-3 text-start transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                                     <i class="bi bi-bullseye fs-5"></i> Set Budget
                                 </a>
                                 <a href="{{ Route::has('categories.index') ? route('categories.index') : '#' }}"
-                                   class="btn btn-sw-light text-center">
+                                   class="btn btn-sw-light text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                                     Categories
                                 </a>
                             </div>
                         </div>
 
                         {{-- Recent transactions --}}
-                        <div class="sw-card sw-entrance">
+                        <div class="sw-card rounded-2xl shadow-sm bg-white sw-entrance">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h3 class="serif fw-semibold fs-5 mb-0">Recent transactions</h3>
                                 @if (Route::has('transactions.index'))

@@ -58,6 +58,13 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        // AI provider monitoring (config/ai.php). Follows the same destinations as the default stack.
+        'ai' => [
+            'driver' => 'stack',
+            'channels' => explode(',', (string) env('AI_LOG_STACK', env('LOG_STACK', 'single'))),
+            'ignore_exceptions' => false,
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
